@@ -21,12 +21,22 @@ This file contains the foundational instructions for all AI agents (Grok, Claude
 - Primary goals: reliable video concatenation, editing, format handling, and automation.
 - Designed to integrate seamlessly with the broader Khorum / GrokClaw memory ecosystem.
 
+## Daily Context Logs (Workshop Folder)
+
+**All significant chat sessions should be preserved as rich context digests in the `workshop/` folder.**
+
+- Follow the exact naming: `MM-DD-YYYY-content_slug_text.md`
+- Use the formatting rules defined in `workshop/AGENTS.md`
+- These logs provide full session continuity for future or parallel agent sessions
+- Create a new log at the end of meaningful work sessions
+
 ## Agent Behavior Guidelines
 1. Always begin by reading this AGENTS.md file.
-2. When making changes, use clear commit messages and update relevant documentation.
-3. Prefer creating dated memory entries in `memory/` for significant updates or decisions.
-4. Maintain clean code and documentation optimized for both humans and agents.
-5. When in doubt, ask for clarification rather than assuming.
+2. Check the latest files in `workshop/` for recent context before starting new work.
+3. When making changes, use clear commit messages and update relevant documentation.
+4. Prefer creating dated memory entries in `memory/` for significant updates or decisions.
+5. Maintain clean code and documentation optimized for both humans and agents.
+6. When in doubt, ask for clarification rather than assuming.
 
 ## Recommended Workflow
 - Explore the codebase using available tools
