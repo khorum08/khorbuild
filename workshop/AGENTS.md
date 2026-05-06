@@ -56,6 +56,19 @@ summary: [1-3 sentence high-level overview of the session]
 [Any additional raw context, links, or detailed notes]
 ```
 
+## Maintaining the Index (`workshop/INDEX.md`)
+
+**Every time you create or modify a context log, you MUST update `workshop/INDEX.md`.**
+
+### Key Responsibilities:
+- Add new entries to the table in INDEX.md
+- Identify and merge duplicate subjects (e.g., repeated discussions on the same topic)
+- Flag stale contexts (logs older than 30 days or superseded by newer decisions) for archival
+- Keep the index sorted by date (newest first)
+- Update the `last_updated` field in INDEX.md frontmatter
+
+See `workshop/INDEX.md` for full maintenance rules and best practices.
+
 ## Best Practices
 - Keep logs **high-signal and concise** (aim for 300–800 words)
 - Use clear, professional Markdown
