@@ -33,32 +33,35 @@ pip install -r requirements.txt
 
 ## For AI Agents & Grok
 
-**Critical Instruction:** Always follow the directives in `AGENTS.md` first.
+**Critical Instruction:** Always start by reading `CONTEXT.md` first. This file defines the exact context loading order.
 
 This repository follows **standard agentic repo practices**:
 
-1. **Always start by reading `AGENTS.md`** for core directives, behavior guidelines, and project context.
-2. Use the `workshop/` folder for daily rich context logs (see `workshop/AGENTS.md` for formatting rules).
-3. Use the `memory/` directory for dated high-signal entries when relevant.
-4. Maintain clean, high-signal Markdown files.
-5. Prefer surgical, low-fluff responses when editing or documenting.
+1. **Read `CONTEXT.md`** (primary bootstrap file)
+2. **Read `AGENTS.md`** for core directives and behavior guidelines
+3. Use the `workshop/` folder for daily rich context logs (see `workshop/AGENTS.md` and `workshop/INDEX.md`)
+4. Use the `memory/` directory for dated high-signal entries when relevant
+5. Maintain clean, high-signal Markdown files
+6. Prefer surgical, low-fluff responses when editing or documenting
 
 **Recommended first step for any agent:**
-> Load `AGENTS.md` → Check `workshop/` for latest context logs → Proceed with task.
+> Load `CONTEXT.md` → `AGENTS.md` → Check latest workshop logs → Proceed with full context
 
 ## Project Structure
 
 ```
 khorbuild/
+├── CONTEXT.md           # Primary agent bootstrap (read this first!)
 ├── README.md
 ├── AGENTS.md
-├── workshop/          # Daily context logs (MM-DD-YYYY-slug.md)
-│   └── AGENTS.md      # Log formatting rules
-├── src/               # Core video processing code
-├── scripts/           # Utility and automation scripts
+├── workshop/            # Daily context logs + INDEX.md
+│   ├── AGENTS.md
+│   └── INDEX.md
+├── src/                 # Core video processing code
+├── scripts/             # Utility and automation scripts
 ├── tests/
-├── memory/            # Agent memory entries (YYYY-MM-DD_slug.md)
-└── directives/        # Project-specific agent instructions
+├── memory/              # Agent memory entries
+└── directives/          # Project-specific agent instructions
 ```
 
 ## Contributing
