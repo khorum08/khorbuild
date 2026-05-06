@@ -18,7 +18,7 @@ khorbuild provides robust tools for video handling tasks, optimized for both hum
 ## Key Features
 - FFmpeg-powered video concatenation, trimming, and format conversion
 - Modular utility scripts and pipelines
-- Agent-optimized directory structure
+- Agent-optimized directory structure with clear development stages
 - Support for batch processing and automated workflows
 - Designed for integration with memory systems (khormemory-style)
 
@@ -33,19 +33,19 @@ pip install -r requirements.txt
 
 ## For AI Agents & Grok
 
-**Critical Instruction:** Always start by reading `CONTEXT.md` first. This file defines the exact context loading order.
+**Critical Instruction:** Always start by reading `CONTEXT.md` first. This file defines the exact context loading order and development stages.
 
-This repository follows **standard agentic repo practices**:
+This repository follows **standard agentic repo practices** with a clear staged workflow:
 
-1. **Read `CONTEXT.md`** (primary bootstrap file)
-2. **Read `AGENTS.md`** for core directives and behavior guidelines
-3. Use the `workshop/` folder for daily rich context logs (see `workshop/AGENTS.md` and `workshop/INDEX.md`)
-4. Use the `memory/` directory for dated high-signal entries when relevant
-5. Maintain clean, high-signal Markdown files
-6. Prefer surgical, low-fluff responses when editing or documenting
+1. **Read `CONTEXT.md`** (primary bootstrap)
+2. **Read `AGENTS.md`** for core directives
+3. Use `workshop/` for ideation and context logging
+4. Move to `prototypes/` for experimental builds
+5. Promote to `builds/` when validated
+6. Final code goes to `src/`
 
 **Recommended first step for any agent:**
-> Load `CONTEXT.md` → `AGENTS.md` → Check latest workshop logs → Proceed with full context
+> Load `CONTEXT.md` → `AGENTS.md` → Check latest workshop logs → Identify current stage → Proceed
 
 ## Project Structure
 
@@ -54,10 +54,14 @@ khorbuild/
 ├── CONTEXT.md           # Primary agent bootstrap (read this first!)
 ├── README.md
 ├── AGENTS.md
-├── workshop/            # Daily context logs + INDEX.md
+├── workshop/            # Ideation + daily context logs
 │   ├── AGENTS.md
 │   └── INDEX.md
-├── src/                 # Core video processing code
+├── prototypes/          # Experimental rough builds
+│   └── README.md
+├── builds/              # Mature validated targets
+│   └── README.md
+├── src/                 # Production code
 ├── scripts/             # Utility and automation scripts
 ├── tests/
 ├── memory/              # Agent memory entries
