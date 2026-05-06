@@ -33,15 +33,18 @@ pip install -r requirements.txt
 
 ## For AI Agents & Grok
 
+**Critical Instruction:** Always follow the directives in `AGENTS.md` first.
+
 This repository follows **standard agentic repo practices**:
 
-1. Always load `AGENTS.md` first for core directives and context.
-2. Use the `memory/` directory for dated entries when relevant.
-3. Maintain clean, high-signal Markdown files.
-4. Prefer surgical, low-fluff responses when editing or documenting.
+1. **Always start by reading `AGENTS.md`** for core directives, behavior guidelines, and project context.
+2. Use the `workshop/` folder for daily rich context logs (see `workshop/AGENTS.md` for formatting rules).
+3. Use the `memory/` directory for dated high-signal entries when relevant.
+4. Maintain clean, high-signal Markdown files.
+5. Prefer surgical, low-fluff responses when editing or documenting.
 
 **Recommended first step for any agent:**
-> Load AGENTS.md and the latest files in the root.
+> Load `AGENTS.md` → Check `workshop/` for latest context logs → Proceed with task.
 
 ## Project Structure
 
@@ -49,6 +52,8 @@ This repository follows **standard agentic repo practices**:
 khorbuild/
 ├── README.md
 ├── AGENTS.md
+├── workshop/          # Daily context logs (MM-DD-YYYY-slug.md)
+│   └── AGENTS.md      # Log formatting rules
 ├── src/               # Core video processing code
 ├── scripts/           # Utility and automation scripts
 ├── tests/
