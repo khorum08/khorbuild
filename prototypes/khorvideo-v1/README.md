@@ -29,14 +29,15 @@ Make creating complex video concatenation commands as simple as dragging files i
 
 ### In Scope (MVP)
 - Video files only (`.mp4`, `.mov`, `.mkv`, `.avi`, etc.)
-- 4-pane layout (Tree | Explorer | Sequence | Console)
+- 4-pane layout with horizontal sequence
 - Folder navigation with tree view
-- File explorer with cached thumbnails
+- File explorer with cached thumbnails (medium-large size + mouseover video playback)
 - Drag & drop to build sequence
 - Real-time FFmpeg execution with console output
 - Progress bar based on FFmpeg output
 - Basic audio track detection + warning system
 - Windows-only application
+- Local files only
 
 ### Out of Scope (Post-MVP)
 - Image support
@@ -48,166 +49,205 @@ Make creating complex video concatenation commands as simple as dragging files i
 
 ---
 
-## 3. Recommended Tech Stack
+## 3. Design Principles
 
-| Layer          | Technology                  | Reason |
-|----------------|-----------------------------|--------|
-| Frontend       | React + TypeScript + Tailwind + shadcn/ui | Fast UI development, modern components |
-| Backend        | Tauri (Rust)                | Native performance, small binary, easy FFmpeg integration |
-| State          | Zustand or Jotai            | Lightweight and simple |
-| Styling        | Tailwind CSS + shadcn/ui    | Clean, consistent, fast iteration |
-| File System    | Tauri FS + Rust             | High performance |
-| Thumbnails     | Windows Thumbnail Cache + custom cache | Leverage system cache where possible |
-| FFmpeg         | Rust `std::process::Command` | Direct execution with real-time output |
-
-**Final Binary:** Single `.exe` (~15-25MB expected)
+- **Modular & Standards-Based**: The app must be built with clean, reusable components so new panes, features, and UX changes can be added easily later.
+- **Performance First**: Fast file browsing and thumbnail loading even in large folders.
+- **Developer Experience**: Clear separation between UI and backend logic.
 
 ---
 
-## 4. User Interface Layout
+## 4. Recommended Tech Stack
 
-### 4-Pane Design (Resizable)
+| Layer          | Technology                          | Reason |
+|----------------|-------------------------------------|--------|
+| Frontend       | React + TypeScript + Tailwind + shadcn/ui | Fast UI development, modern components, easy to extend |
+| Backend        | Tauri (Rust)                        | Native performance, small binary, excellent FFmpeg integration |
+| State          | Zustand                             | Lightweight and simple |
+| Styling        | Tailwind CSS + shadcn/ui            | Clean, consistent, fast iteration |
+| File System    | Tauri FS + Rust                     | High performance |
+| Thumbnails     | Hybrid: Windows Thumbnail Cache + custom cache | Best performance + reliability |
+| FFmpeg         | Rust `std::process::Command` + streaming | Direct execution with real-time output |
+
+**Final Binary:** Single `.exe` (~15-25MB expected)
+
+**Note on Setup**: This stack requires installing Rust and Node.js. Setup instructions are included at the bottom of this document.
+
+---
+
+## 5. User Interface Layout (Updated)
+
+### Final Layout
 
 ```
 +-----------------------------------------------+
-| Menu Bar                                      |
-+---------------+----------------+--------------+
-|               |                |              |
-|   Tree Pane   |  Explorer Pane | Sequence     |
-|   (Folders)   |  (Thumbnails)  | Pane         |
-|               |                | (Drop Zone)  |
-|               |                |              |
-+---------------+----------------+--------------+
-| Console Output Pane (FFmpeg stdout/stderr)    |
+|                 Menu Bar                      |
++---------------+-------------------------------+
+|   Tree Pane   |     Explorer Pane             |
+|   (Folders)   |   (Thumbnails - Med/Large)    |
+|               |   + Mouseover Video Preview   |
++---------------+-------------------------------+
+|          Sequence Pane (Horizontal)           |
+|     [Drag & Drop + Reorder Videos]            |
 +-----------------------------------------------+
 | Status Bar (Progress + General Info)          |
++-----------------------------------------------+
+| Console Output (FFmpeg stdout/stderr)         |
 +-----------------------------------------------+
 ```
 
 **Pane Details:**
-
-- **Left (Tree):** Folder tree navigation
-- **Middle (Explorer):** Grid/list view of current folder with thumbnails
-- **Right (Sequence):** Drag-and-drop area showing ordered media with thumbnails + remove buttons
-- **Bottom (Console):** Real-time FFmpeg output (scrollable)
-- **Status Bar:** Progress bar + current operation status
+- **Left (Tree)**: Folder tree navigation
+- **Middle (Explorer)**: Grid view with medium-large thumbnails + hover-to-play preview for videos
+- **Below Explorer (Sequence)**: Horizontal drag-and-drop area showing ordered videos with thumbnails
+- **Bottom Status Bar**: Progress bar + current status
+- **Console Pane**: Real-time FFmpeg output (scrollable, color-coded)
 
 ---
 
-## 5. Core Features
+## 6. Core Features
 
-### 5.1 File Explorer & Thumbnails
+### 6.1 File Explorer & Thumbnails
 - Navigate local folders via tree + breadcrumb
-- Display files with cached thumbnails
+- Display files with **medium-large cached thumbnails**
 - Attempt to use Windows Thumbnail Cache first
-- Fallback to generating thumbnails via FFmpeg (`-ss 00:00:01 -frames:v 1`)
+- Fallback to generating thumbnails via FFmpeg
+- **Mouseover video playback** on video thumbnails (play short preview on hover)
 - Thumbnail caching system (local app cache)
 
-### 5.2 Sequence Builder
+### 6.2 Sequence Builder
 - Drag files from Explorer to Sequence pane
 - Reorder via drag & drop
 - Remove items from sequence
-- Show thumbnail + filename + duration (if available)
+- Show thumbnail + filename + duration
 - Prevent adding non-video files
 
-### 5.3 FFmpeg Integration
+### 6.3 FFmpeg Integration
 - Generate concat command based on sequence order
-- Run FFmpeg directly from the app
-- Capture and display real-time stdout + stderr
+- Run FFmpeg directly from the app (Rust backend)
+- Capture and display real-time stdout + stderr in console pane
 - Parse progress from FFmpeg output for status bar
-- Detect audio tracks in source files
-- Show warning if any file is missing audio
-- Allow user to continue or cancel if audio is missing
+- Detect audio tracks using ffprobe before running
+- Show clear warning if any file is missing audio
+- Allow user to continue or cancel
 
-### 5.4 Console & Feedback
-- Full terminal-like output pane
-- Color-coded logs (info, warning, error)
+### 6.4 Console & Feedback
+- Full terminal-like output pane with color coding
 - Auto-scroll to bottom
 - Copy output button
+- Progress bar in status bar that updates live
 
 ---
 
-## 6. Technical Architecture
+## 7. Technical Architecture
 
 ### Backend (Rust / Tauri)
-- File system commands (list, read, thumbnail generation)
-- FFmpeg process management with real-time output streaming
-- Thumbnail cache management
-- Windows thumbnail cache integration (via `windows` crate or COM)
+- File system commands
+- Thumbnail generation and caching
+- FFmpeg process management with real-time streaming
+- Audio detection via ffprobe
+- Windows thumbnail cache integration (via `windows` crate)
 
 ### Frontend (React)
-- Component-based UI
-- Drag & drop using `@hello-pangea/dnd` or HTML5 Drag API
-- Real-time state updates from Rust backend via Tauri events
+- Modular component architecture (easy to extend)
+- Drag & drop using modern libraries
+- Real-time updates from Rust backend via Tauri events
 - Responsive pane resizing
 
 ### Data Flow
 1. User selects folder → Backend lists files + generates thumbnails
 2. User drags file to Sequence → Frontend state updates
-3. User clicks "Run Concat" → Backend starts FFmpeg process
+3. User clicks "Run" → Backend starts FFmpeg process
 4. FFmpeg output streamed back to frontend in real time
-5. Progress bar updated based on parsed output
+5. Progress bar + console updated live
 
 ---
 
-## 7. Key Challenges & Solutions
+## 8. Key Challenges & Solutions
 
-| Challenge                        | Proposed Solution |
-|----------------------------------|-------------------|
-| Windows Thumbnail Cache access   | Use `windows-rs` crate + `IShellItem` / `IThumbnailCache` |
-| Real-time FFmpeg output          | Use `tokio::process` + channel streaming |
-| Thumbnail performance            | Hybrid approach: Windows cache → App cache → Generate on demand |
-| Audio detection                  | Use `ffprobe` (part of FFmpeg) before running concat |
-| Large folder performance         | Virtualized lists + lazy loading |
+| Challenge                              | Proposed Solution                                      |
+|----------------------------------------|--------------------------------------------------------|
+| Windows Thumbnail Cache access         | Use `windows-rs` crate + modern Windows APIs           |
+| Real-time FFmpeg output streaming      | Use `tokio` + async channels (well-documented pattern) |
+| Mouseover video preview                | Generate short preview clips or use HTML5 video        |
+| Audio detection                        | Run `ffprobe` before concat and parse output           |
+| Large folder performance               | Virtualized lists + lazy thumbnail loading             |
 
 ---
 
-## 8. Project Structure (Proposed)
+## 9. Project Structure (Proposed)
 
 ```
 prototypes/khorvideo-v1/
-├── src-tauri/                 # Rust backend
+├── src-tauri/                     # Rust backend
 │   ├── src/
 │   │   ├── main.rs
-│   │   ├── commands.rs      # Tauri commands
-│   │   └── ffmpeg.rs        # FFmpeg logic
-├── src/                       # React frontend
+│   │   ├── commands.rs
+│   │   ├── ffmpeg.rs
+│   │   └── thumbnail.rs
+├── src/                           # React frontend
 │   ├── components/
 │   │   ├── TreePane.tsx
 │   │   ├── ExplorerPane.tsx
 │   │   ├── SequencePane.tsx
-│   │   └── ConsolePane.tsx
+│   │   ├── ConsolePane.tsx
+│   │   └── StatusBar.tsx
 │   ├── App.tsx
 │   └── main.tsx
-├── public/
 ├── package.json
 ├── tauri.conf.json
-└── README.md
+└── README.md (this file)
 ```
 
 ---
 
-## 9. Next Steps
+## 10. Next Steps
 
-1. Set up Tauri + React project scaffolding
-2. Implement basic 4-pane layout
-3. Build folder navigation + file listing
-4. Implement thumbnail system (simple version first)
-5. Add drag & drop sequence builder
-6. Integrate FFmpeg execution + console output
-7. Add audio detection + warnings
-8. Polish UI and progress bar
-
----
-
-## 10. Open Questions
-
-- Should we support subfolder recursion in the explorer?
-- Do we want a "Preview Sequence" button before running?
-- Should output files go to a default folder or let user choose every time?
-- Any preference on UI theme (dark mode only?)
+1. Update this spec (done)
+2. Set up Tauri + React project scaffolding
+3. Implement basic layout with new pane structure
+4. Build folder navigation + file listing
+5. Implement thumbnail system (medium-large + hover preview)
+6. Add drag & drop sequence builder
+7. Integrate FFmpeg execution + real-time console
+8. Add audio detection + warnings
+9. Add status bar and progress parsing
+10. Polish UI and error handling
 
 ---
 
-**Status:** Ready to begin implementation.
+## 11. Setup Instructions (Tauri + React)
+
+### Prerequisites
+- Install **Node.js** (LTS version recommended)
+- Install **Rust** (via rustup: https://rustup.rs/)
+- Install **Visual Studio Build Tools** (for Windows)
+
+### Quick Start Commands
+```bash
+# 1. Create new Tauri project
+npm create tauri-app@latest
+
+# 2. Choose React + TypeScript template
+# 3. cd into the project folder
+cd khorvideo-v1
+
+# 4. Install dependencies
+npm install
+
+# 5. Run in development mode
+npm run tauri dev
+```
+
+---
+
+## 12. Open Questions
+
+- Default output folder behavior (user chooses every time vs fixed folder)?
+- Any specific keyboard shortcuts needed in MVP?
+- Theme preference (dark mode only or light/dark toggle)?
+
+---
+
+**Status:** Spec updated and ready for implementation.
 **Owner:** Victor (via Grok)
