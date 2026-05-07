@@ -3,7 +3,7 @@ title: Workshop Context Log Index
 date: 2026-05-06
 tags: [workshop, index, context-management]
 status: active
-last_updated: 2026-05-07-session3
+last_updated: 2026-05-07-session4
 ---
 
 # Workshop Context Log Index
@@ -41,6 +41,7 @@ This file serves as the **single source of truth** for all daily context logs st
 
 | Date       | Log File                              | Description                              | Tags                          | Status    |
 |------------|---------------------------------------|------------------------------------------|-------------------------------|-----------|
+| 2026-05-07 | 05-07-2026-khorvideo-v1-fixes-hover-thumbs-v02-release.md | Session 4: async_runtime panic fix, hover-play WebM thumbnails, FFmpeg error surfacing, .webp cache migration, v0.2.0 release bump | khorvideo, tauri, webm, release, bugfix | Active |
 | 2026-05-07 | 05-07-2026-khorvideo-v1-thumbnails-streaming-polish.md | Session 3: animated WebP thumbnail pipeline, FFmpeg live streaming, duration labels, MSI bundle, sequence thumb fix | khorvideo, thumbnails, ffmpeg, streaming, rust | Active |
 | 2026-05-07 | 05-07-2026-icon-fix-build-verification.md | Claude Code session: Windows icon fix, build verification, gh CLI setup, .gitignore hygiene, missing log reconstruction | claude-code, khorvideo, icons, build, gitignore | Active |
 | 2026-05-07 | 05-07-2026-khorvideo-v1-runnable-workflow.md | Wired runnable folder loading, sequence reordering, ffprobe audio checks, and FFmpeg concat execution | prototype, khorvideo, ffmpeg, tauri | Active |
