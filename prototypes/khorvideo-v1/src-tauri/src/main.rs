@@ -27,7 +27,7 @@ fn main() {
 
             let app_handle = app.handle().clone();
 
-            tokio::spawn(thumbnailer::thumbnail_worker(
+            tauri::async_runtime::spawn(thumbnailer::thumbnail_worker(
                 thumb_rx,
                 cache_tx,
                 cache_dir.clone(),
@@ -35,7 +35,7 @@ fn main() {
                 current_gen,
                 app_handle,
             ));
-            tokio::spawn(thumbnailer::cache_manager(
+            tauri::async_runtime::spawn(thumbnailer::cache_manager(
                 cache_rx,
                 cache_dir.clone(),
                 shared_index.clone(),
