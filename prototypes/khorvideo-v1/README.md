@@ -10,7 +10,7 @@ status: draft
 **Project Name:** KhorVideo (working title)
 **Version:** MVP v1.0
 **Date:** May 6, 2026
-**Status:** Planning / Ready for Implementation
+**Status:** Runnable local prototype / filesystem + concat workflow wired
 
 ---
 
@@ -30,12 +30,12 @@ Make creating complex video concatenation commands as simple as dragging files i
 ### In Scope (MVP)
 - Video files only (`.mp4`, `.mov`, `.mkv`, `.avi`, etc.)
 - 4-pane layout with horizontal sequence
-- Folder navigation with tree view
-- File explorer with cached thumbnails (medium-large size + mouseover video playback)
-- Drag & drop to build sequence
-- Real-time FFmpeg execution with console output
-- Progress bar based on FFmpeg output
-- Basic audio track detection + warning system
+- Folder navigation with tree view/path loading
+- File explorer with medium-large placeholder thumbnails (cached thumbnails + hover playback still pending)
+- Click-to-add plus drag/arrow reorder sequence builder
+- FFmpeg concat execution with console output after process completion
+- Status bar based on loading/running state (deep FFmpeg progress parsing still pending)
+- Basic audio track detection + warning system via ffprobe
 - Windows-only application
 - Local files only
 
@@ -64,7 +64,7 @@ Make creating complex video concatenation commands as simple as dragging files i
 | Frontend       | React + TypeScript + Tailwind + shadcn/ui | Fast UI development, modern components, easy to extend |
 | Backend        | Tauri (Rust)                        | Native performance, small binary, excellent FFmpeg integration |
 | State          | Zustand                             | Lightweight and simple |
-| Styling        | Tailwind CSS + shadcn/ui            | Clean, consistent, fast iteration |
+| Styling        | Plain CSS prototype styles; Tailwind/shadcn deferred | Avoids adding blocked dependencies while preserving a clean dark UI shell |
 | File System    | Tauri FS + Rust                     | High performance |
 | Thumbnails     | Hybrid: Windows Thumbnail Cache + custom cache | Best performance + reliability |
 | FFmpeg         | Rust `std::process::Command` + streaming | Direct execution with real-time output |
@@ -179,23 +179,33 @@ Make creating complex video concatenation commands as simple as dragging files i
 
 ```
 prototypes/khorvideo-v1/
+├── Cargo.toml                     # Workspace manifest for Tauri CLI dev watching
+├── scripts/
+│   └── tauri-cli.mjs              # Adds --no-watch for `npm run tauri dev` on Windows
 ├── src-tauri/                     # Rust backend
-│   ├── src/
-│   │   ├── main.rs
-│   │   ├── commands.rs
-│   │   ├── ffmpeg.rs
-│   │   └── thumbnail.rs
+│   ├── build.rs
+│   ├── tauri.conf.json
+│   └── src/
+│       ├── main.rs
+│       └── commands.rs            # Initial directory listing command
 ├── src/                           # React frontend
 │   ├── components/
-│   │   ├── TreePane.tsx
+│   │   ├── ConsolePane.tsx
 │   │   ├── ExplorerPane.tsx
 │   │   ├── SequencePane.tsx
-│   │   ├── ConsolePane.tsx
-│   │   └── StatusBar.tsx
+│   │   ├── StatusBar.tsx
+│   │   ├── TopBar.tsx
+│   │   └── TreePane.tsx
+│   ├── data/mockVideos.ts
+│   ├── store/useKhorVideoStore.ts
 │   ├── App.tsx
-│   └── main.tsx
+│   ├── main.tsx
+│   ├── styles.css
+│   └── types.ts
 ├── package.json
-├── tauri.conf.json
+├── tsconfig.json
+├── tsconfig.node.json
+├── vite.config.ts
 └── README.md (this file)
 ```
 
@@ -204,14 +214,14 @@ prototypes/khorvideo-v1/
 ## 10. Next Steps
 
 1. Update this spec (done)
-2. Set up Tauri + React project scaffolding
-3. Implement basic layout with new pane structure
-4. Build folder navigation + file listing
-5. Implement thumbnail system (medium-large + hover preview)
-6. Add drag & drop sequence builder
-7. Integrate FFmpeg execution + real-time console
-8. Add audio detection + warnings
-9. Add status bar and progress parsing
+2. Set up Tauri + React project scaffolding (done)
+3. Implement basic layout with modular pane structure (done)
+4. Build folder navigation + file listing (done via manual path load + Tauri `list_directory`)
+5. Implement thumbnail system (partial: styled placeholders; cached thumbnail generation still pending)
+6. Add drag & drop sequence builder (done for sequence reorder; explorer-to-sequence remains click-to-add)
+7. Integrate FFmpeg execution + console output (done as blocking command; real-time streaming still pending)
+8. Add audio detection + warnings (done via `ffprobe`)
+9. Add status bar and progress parsing (partial: loading/running status done; FFmpeg progress parsing pending)
 10. Polish UI and error handling
 
 ---
@@ -222,6 +232,25 @@ prototypes/khorvideo-v1/
 - Install **Node.js** (LTS version recommended)
 - Install **Rust** (via rustup: https://rustup.rs/)
 - Install **Visual Studio Build Tools** (for Windows)
+
+
+### Current Local Run Workflow
+
+```bash
+cd prototypes/khorvideo-v1
+npm install
+npm run tauri dev
+```
+
+Runtime expectations:
+- Run inside Tauri for real filesystem/FFmpeg access; the browser-only Vite view keeps mock data for layout development.
+- Enter a local folder path and click **Load Folder** to list child folders and supported video files.
+- Click video thumbnails to add clips to the sequence.
+- Drag staged clips, or use ↑/↓ controls, to reorder them.
+- Set an output path, click **Probe Audio** if desired, then click **Run Concat**.
+- `ffmpeg` and `ffprobe` must be available on `PATH`.
+- `npm run tauri dev` is routed through `scripts/tauri-cli.mjs`, which adds `--no-watch` for dev runs to avoid the Windows Tauri watcher error around `prototypes/khorvideo-v1/Cargo.toml`.
+- The root `Cargo.toml` is intentional workspace metadata for Cargo/Tauri commands while keeping the Rust app crate in `src-tauri/`.
 
 ### Quick Start Commands
 ```bash
@@ -249,5 +278,5 @@ npm run tauri dev
 
 ---
 
-**Status:** Spec updated and ready for implementation.
+**Status:** Runnable local prototype; next step is cached thumbnails, non-blocking FFmpeg event streaming, and deeper UX polish.
 **Owner:** Victor (via Grok)

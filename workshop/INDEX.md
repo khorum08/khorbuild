@@ -3,7 +3,7 @@ title: Workshop Context Log Index
 date: 2026-05-06
 tags: [workshop, index, context-management]
 status: active
-last_updated: 2026-05-06
+last_updated: 2026-05-07
 ---
 
 # Workshop Context Log Index
@@ -41,10 +41,12 @@ This file serves as the **single source of truth** for all daily context logs st
 
 | Date       | Log File                              | Description                              | Tags                          | Status    |
 |------------|---------------------------------------|------------------------------------------|-------------------------------|-----------|
-| 2026-05-06 | 05-06-2026-khorbuild-repo-setup.md   | Initial repo creation + agentic structure setup | repo-setup, agentic, workshop | Active    |
+| 2026-05-07 | 05-07-2026-khorvideo-v1-runnable-workflow.md | Wired runnable folder loading, sequence reordering, ffprobe audio checks, and FFmpeg concat execution | prototype, khorvideo, ffmpeg, tauri | Active |
+| 2026-05-07 | 05-07-2026-khorvideo-v1-scaffold-hardening.md | Hardened KhorVideo v1 scaffold with build config, modular UI panes, Zustand mock state, and initial Tauri command | prototype, khorvideo, tauri, react | Active |
+| 2026-05-06 | 05-06-2026-khorbuild-repo-setup.md   | Initial repo creation + agentic structure setup; file referenced by index but absent in current checkout | repo-setup, agentic, workshop | Missing in checkout |
 
 ## Notes
 - This index should be updated **every time** a new log is created or modified.
 - Future agents should consult this file before diving into individual logs.
 
-Last maintained: 2026-05-06
+Last maintained: 2026-05-07
