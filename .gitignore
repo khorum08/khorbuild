@@ -22,3 +22,6 @@ pnpm-debug.log*
 Thumbs.db
 .vscode/
 .idea/
+
+# Claude Code local data (worktrees, session memory, agent state)
+.claude/
