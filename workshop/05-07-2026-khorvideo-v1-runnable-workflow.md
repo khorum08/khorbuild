@@ -67,3 +67,9 @@ npm run tauri dev
 ```
 
 Tradeoff: Rust hot-reload watching is disabled for this prototype dev command. Frontend Vite dev serving still runs through Tauri's `beforeDevCommand`; rerun `npm run tauri dev` after Rust backend changes.
+
+---
+
+## Follow-up: Windows `spawn EINVAL` Fix
+
+After the `--no-watch` wrapper landed, Windows reported `Error: spawn EINVAL` from `scripts/tauri-cli.mjs` while trying to spawn `node_modules/.bin/tauri.cmd` with `shell: false`. The wrapper now enables `shell: true` only on Windows so `.cmd` shims are launched through the Windows command shell, while Linux/macOS continue to spawn the binary directly.
