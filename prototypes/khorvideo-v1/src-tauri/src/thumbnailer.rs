@@ -196,7 +196,7 @@ pub async fn thumbnail_worker(
         let app = app.clone();
         let original_path = req.path.clone();
 
-        tokio::spawn(async move {
+        tauri::async_runtime::spawn(async move {
             let _permit = sem.acquire().await.unwrap();
 
             // Re-check generation after acquiring the semaphore slot
@@ -208,7 +208,7 @@ pub async fn thumbnail_worker(
             let cache_dir_c = cache_dir.clone();
             let hash_c = hash.clone();
 
-            let result = tokio::task::spawn_blocking(move || {
+            let result = tauri::async_runtime::spawn_blocking(move || {
                 do_generate(&path_c, &cache_dir_c, &hash_c)
             })
             .await;
@@ -263,7 +263,7 @@ pub async fn cache_manager(
 // ── orphan cleanup (fire-and-forget at startup) ───────────────────────────────
 
 pub fn spawn_orphan_cleanup(cache_dir: PathBuf, index: Arc<Mutex<CacheIndex>>) {
-    tokio::spawn(async move {
+    tauri::async_runtime::spawn(async move {
         // Snapshot without holding the lock
         let snapshot: Vec<(String, String, String)> = {
             let idx = index.lock().await;
@@ -273,7 +273,7 @@ pub fn spawn_orphan_cleanup(cache_dir: PathBuf, index: Arc<Mutex<CacheIndex>>) {
         };
 
         let cache_dir_c = cache_dir.clone();
-        let orphans: Vec<(String, String)> = tokio::task::spawn_blocking(move || {
+        let orphans: Vec<(String, String)> = tauri::async_runtime::spawn_blocking(move || {
             snapshot
                 .into_iter()
                 .filter(|(_, path, _)| !Path::new(path).exists())

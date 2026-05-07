@@ -157,7 +157,7 @@ fn probe_duration_secs(path: &str) -> Option<f64> {
 
 #[tauri::command]
 pub async fn probe_durations(paths: Vec<String>) -> Result<Vec<DurationResult>, String> {
-    tokio::task::spawn_blocking(move || {
+    tauri::async_runtime::spawn_blocking(move || {
         paths
             .into_iter()
             .map(|path| {
@@ -229,7 +229,7 @@ pub async fn run_concat(job: ConcatJob, app: tauri::AppHandle) -> Result<ConcatR
     let raw_stdout = child.stdout.take().unwrap();
 
     let app_for_stderr = app.clone();
-    let stderr_task = tokio::spawn(async move {
+    let stderr_task = tauri::async_runtime::spawn(async move {
         let mut lines = AsyncBufReader::new(raw_stderr).lines();
         let mut collected = String::new();
         while let Ok(Some(line)) = lines.next_line().await {
@@ -243,7 +243,7 @@ pub async fn run_concat(job: ConcatJob, app: tauri::AppHandle) -> Result<ConcatR
     });
 
     let app_for_stdout = app.clone();
-    let stdout_task = tokio::spawn(async move {
+    let stdout_task = tauri::async_runtime::spawn(async move {
         let mut lines = AsyncBufReader::new(raw_stdout).lines();
         let mut collected = String::new();
         while let Ok(Some(line)) = lines.next_line().await {
