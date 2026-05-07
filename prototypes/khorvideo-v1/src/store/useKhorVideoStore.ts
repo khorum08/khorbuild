@@ -1,6 +1,5 @@
 import { create } from 'zustand'
-import { listDirectory, probeAudio, runConcat } from '../lib/tauriApi'
-import { mockFolders, mockVideos } from '../data/mockVideos'
+import { getHomeDir, listDirectory, probeAudio, runConcat } from '../lib/tauriApi'
 import type { ConsoleLine, ConcatResult, DirectoryEntry, FolderNode, VideoFile } from '../types'
 
 type KhorVideoState = {
@@ -14,6 +13,7 @@ type KhorVideoState = {
   isLoadingDirectory: boolean
   isRunningConcat: boolean
   lastConcatResult: ConcatResult | null
+  init: () => Promise<void>
   setFolderInput: (path: string) => void
   setOutputPath: (path: string) => void
   loadDirectory: (path?: string) => Promise<void>
@@ -68,16 +68,30 @@ const reorder = <T>(items: T[], fromIndex: number, toIndex: number) => {
 }
 
 export const useKhorVideoStore = create<KhorVideoState>((set, get) => ({
-  activeFolder: 'C:\\Videos',
-  folderInput: 'C:\\Videos',
+  activeFolder: '',
+  folderInput: '',
   outputPath: 'C:\\Videos\\khorvideo-concat-output.mp4',
-  folders: mockFolders,
-  explorerFiles: mockVideos,
+  folders: [],
+  explorerFiles: [],
   sequence: [],
   consoleLines: initialConsoleLines,
   isLoadingDirectory: false,
   isRunningConcat: false,
   lastConcatResult: null,
+  init: async () => {
+    try {
+      const homeDir = await getHomeDir()
+      set({ folderInput: homeDir, outputPath: `${homeDir}\\Videos\\khorvideo-concat-output.mp4` })
+      await get().loadDirectory(homeDir)
+    } catch (error) {
+      set((state) => ({
+        consoleLines: [
+          ...state.consoleLines,
+          createLogLine('warn', `[WARN] Could not resolve home directory: ${error instanceof Error ? error.message : String(error)}`),
+        ],
+      }))
+    }
+  },
   setFolderInput: (path) => set({ folderInput: path }),
   setOutputPath: (path) => set({ outputPath: path }),
   loadDirectory: async (path) => {

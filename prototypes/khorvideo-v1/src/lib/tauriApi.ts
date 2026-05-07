@@ -7,6 +7,10 @@ type WindowWithTauri = Window & {
 
 export const isRunningInTauri = () => typeof window !== 'undefined' && '__TAURI_INTERNALS__' in (window as WindowWithTauri)
 
+export async function getHomeDir(): Promise<string> {
+  return invoke<string>('get_home_dir')
+}
+
 export async function listDirectory(path: string): Promise<DirectoryEntry[]> {
   return invoke<DirectoryEntry[]>('list_directory', { path })
 }
