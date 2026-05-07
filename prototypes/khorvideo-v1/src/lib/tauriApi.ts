@@ -1,7 +1,7 @@
 import { convertFileSrc, invoke } from '@tauri-apps/api/core'
 import { listen } from '@tauri-apps/api/event'
 import { open } from '@tauri-apps/plugin-dialog'
-import type { ConcatResult, DirectoryEntry, ProbeResult } from '../types'
+import type { ConcatResult, DirectoryEntry, DurationResult, ProbeResult } from '../types'
 
 type WindowWithTauri = Window & {
   __TAURI_INTERNALS__?: unknown
@@ -24,6 +24,10 @@ export async function listDirectory(path: string): Promise<DirectoryEntry[]> {
 
 export async function probeAudio(path: string): Promise<ProbeResult> {
   return invoke<ProbeResult>('probe_audio', { path })
+}
+
+export async function probeDurations(paths: string[]): Promise<DurationResult[]> {
+  return invoke<DurationResult[]>('probe_durations', { paths })
 }
 
 export async function requestThumbnails(paths: string[], generation: number): Promise<void> {
