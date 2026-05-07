@@ -1,4 +1,5 @@
 import { invoke } from '@tauri-apps/api/core'
+import { open } from '@tauri-apps/plugin-dialog'
 import type { ConcatResult, DirectoryEntry, ProbeResult } from '../types'
 
 type WindowWithTauri = Window & {
@@ -6,6 +7,11 @@ type WindowWithTauri = Window & {
 }
 
 export const isRunningInTauri = () => typeof window !== 'undefined' && '__TAURI_INTERNALS__' in (window as WindowWithTauri)
+
+export async function openFolderDialog(defaultPath?: string): Promise<string | null> {
+  const result = await open({ directory: true, multiple: false, defaultPath })
+  return typeof result === 'string' ? result : null
+}
 
 export async function getHomeDir(): Promise<string> {
   return invoke<string>('get_home_dir')

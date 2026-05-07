@@ -13,14 +13,14 @@ export function TreePane({ folders, isLoading, onOpenFolder }: TreePaneProps) {
       <nav className="folder-tree" aria-label="Folder tree">
         {folders.map((folder) => (
           <button
-            className={`folder-row${folder.active ? ' active' : ''}`}
+            className={`folder-row${folder.active ? ' active' : ''}${folder.id === '..' ? ' parent-row' : ''}`}
             disabled={isLoading}
             key={folder.id}
             onClick={() => onOpenFolder(folder.path)}
             style={{ paddingLeft: `${12 + folder.depth * 18}px` }}
             type="button"
           >
-            <span className="folder-icon">▸</span>
+            <span className="folder-icon">{folder.id === '..' ? '▴' : '▸'}</span>
             <span className="folder-label" title={folder.path}>
               {folder.label}
             </span>

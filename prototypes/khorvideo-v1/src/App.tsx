@@ -21,6 +21,7 @@ function App() {
   const setOutputPath = useKhorVideoStore((state) => state.setOutputPath)
   const loadDirectory = useKhorVideoStore((state) => state.loadDirectory)
   const openFolder = useKhorVideoStore((state) => state.openFolder)
+  const selectAndLoadFolder = useKhorVideoStore((state) => state.selectAndLoadFolder)
   const addToSequence = useKhorVideoStore((state) => state.addToSequence)
   const removeFromSequence = useKhorVideoStore((state) => state.removeFromSequence)
   const moveSequenceItem = useKhorVideoStore((state) => state.moveSequenceItem)
@@ -46,6 +47,7 @@ function App() {
           onAddToSequence={addToSequence}
           onFolderInputChange={setFolderInput}
           onLoadFolder={() => void loadDirectory()}
+          onSelectFolder={() => void selectAndLoadFolder()}
         />
       </div>
 

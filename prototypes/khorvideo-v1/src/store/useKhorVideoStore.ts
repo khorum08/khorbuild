@@ -1,5 +1,5 @@
 import { create } from 'zustand'
-import { getHomeDir, listDirectory, probeAudio, runConcat } from '../lib/tauriApi'
+import { getHomeDir, listDirectory, openFolderDialog, probeAudio, runConcat } from '../lib/tauriApi'
 import type { ConsoleLine, ConcatResult, DirectoryEntry, FolderNode, VideoFile } from '../types'
 
 type KhorVideoState = {
@@ -14,6 +14,7 @@ type KhorVideoState = {
   isRunningConcat: boolean
   lastConcatResult: ConcatResult | null
   init: () => Promise<void>
+  selectAndLoadFolder: () => Promise<void>
   setFolderInput: (path: string) => void
   setOutputPath: (path: string) => void
   loadDirectory: (path?: string) => Promise<void>
@@ -56,6 +57,14 @@ const directoryEntryToFolderNode = (entry: DirectoryEntry): FolderNode => ({
   depth: 0,
 })
 
+const getParentPath = (path: string): string | null => {
+  const normalized = path.replace(/[/\\]+$/, '')
+  const lastSep = Math.max(normalized.lastIndexOf('/'), normalized.lastIndexOf('\\'))
+  if (lastSep <= 0) return null
+  const parent = normalized.substring(0, lastSep)
+  return /^[A-Za-z]:$/.test(parent) ? parent + '\\' : parent
+}
+
 const reorder = <T>(items: T[], fromIndex: number, toIndex: number) => {
   if (fromIndex === toIndex || fromIndex < 0 || toIndex < 0 || fromIndex >= items.length || toIndex >= items.length) {
     return items
@@ -92,6 +101,14 @@ export const useKhorVideoStore = create<KhorVideoState>((set, get) => ({
       }))
     }
   },
+  selectAndLoadFolder: async () => {
+    const { activeFolder, folderInput } = get()
+    const startPath = activeFolder || folderInput || undefined
+    const selected = await openFolderDialog(startPath)
+    if (!selected) return
+    set({ folderInput: selected })
+    await get().loadDirectory(selected)
+  },
   setFolderInput: (path) => set({ folderInput: path }),
   setOutputPath: (path) => set({ outputPath: path }),
   loadDirectory: async (path) => {
@@ -113,11 +130,16 @@ export const useKhorVideoStore = create<KhorVideoState>((set, get) => ({
       const entries = await listDirectory(requestedPath)
       const folders = entries.filter((entry) => entry.isDirectory).map(directoryEntryToFolderNode)
       const videos = entries.filter((entry) => entry.isVideo).map(directoryEntryToVideoFile)
+      const parentPath = getParentPath(requestedPath)
 
       set((state) => ({
         activeFolder: requestedPath,
         folderInput: requestedPath,
-        folders: [{ id: requestedPath, label: requestedPath, path: requestedPath, depth: 0, active: true }, ...folders],
+        folders: [
+          ...(parentPath ? [{ id: '..', label: '..', path: parentPath, depth: 0 }] : []),
+          { id: requestedPath, label: requestedPath, path: requestedPath, depth: 0, active: true },
+          ...folders,
+        ],
         explorerFiles: videos,
         isLoadingDirectory: false,
         consoleLines: [
