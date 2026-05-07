@@ -72,7 +72,13 @@ export function SequencePane({
               }}
             >
               <div className="sequence-index">{index + 1}</div>
-              <div className={`sequence-thumb tone-${file.thumbnailTone}`}>▶</div>
+              <div className={`sequence-thumb tone-${file.thumbnailTone}`}>
+                {file.thumbnailSrc ? (
+                  <img src={file.thumbnailSrc} alt={file.name} className="sequence-thumb-img" />
+                ) : (
+                  '▶'
+                )}
+              </div>
               <div className="sequence-copy">
                 <div className="file-name" title={file.path}>
                   {file.name}
