@@ -85,3 +85,7 @@ A local Windows checkout reported `SyntaxError: Identifier 'tauriBin' has alread
 ## Follow-up: New Wrapper Entrypoint
 
 A Windows checkout continued to execute a malformed `scripts/tauri-cli.mjs` containing stale `tauriBin` declarations after PR merges. To avoid any stale-file merge residue, the npm `tauri` script now points to a new wrapper file, `scripts/run-tauri.mjs`. The new wrapper preserves the same behavior: it adds `--no-watch` for `dev` runs and uses the Windows shell for the `tauri.cmd` shim.
+
+### 2026-05-07 PR Conflict Resolution Note
+
+The active npm `tauri` script should point only to `scripts/run-tauri.mjs`; do not accept both conflicting script entries in `package.json`. The older `scripts/tauri-cli.mjs` wrapper was removed from the prototype because stale merge residue in that file repeatedly produced Windows syntax errors (`tauriBin` duplicate/unexpected identifier). If GitHub shows conflicts, keep the `run-tauri.mjs` path and remove/resolve `tauri-cli.mjs` in favor of the new wrapper.

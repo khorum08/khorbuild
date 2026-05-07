@@ -181,7 +181,7 @@ Make creating complex video concatenation commands as simple as dragging files i
 prototypes/khorvideo-v1/
 ├── Cargo.toml                     # Workspace manifest for Tauri CLI dev watching
 ├── scripts/
-│   └── tauri-cli.mjs              # Adds --no-watch for `npm run tauri dev` on Windows
+│   └── run-tauri.mjs              # Adds --no-watch for `npm run tauri dev` on Windows
 ├── src-tauri/                     # Rust backend
 │   ├── build.rs
 │   ├── tauri.conf.json
@@ -249,7 +249,7 @@ Runtime expectations:
 - Drag staged clips, or use ↑/↓ controls, to reorder them.
 - Set an output path, click **Probe Audio** if desired, then click **Run Concat**.
 - `ffmpeg` and `ffprobe` must be available on `PATH`.
-- `npm run tauri dev` is routed through `scripts/tauri-cli.mjs`, which adds `--no-watch` for dev runs to avoid the Windows Tauri watcher error around `prototypes/khorvideo-v1/Cargo.toml`.
+- `npm run tauri dev` is routed through `scripts/run-tauri.mjs`, which adds `--no-watch` for dev runs to avoid the Windows Tauri watcher error around `prototypes/khorvideo-v1/Cargo.toml`.
 - The root `Cargo.toml` is intentional workspace metadata for Cargo/Tauri commands while keeping the Rust app crate in `src-tauri/`.
 
 ### Quick Start Commands
