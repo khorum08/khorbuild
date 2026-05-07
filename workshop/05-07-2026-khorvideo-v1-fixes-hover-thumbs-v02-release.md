@@ -106,3 +106,33 @@ Note: FFmpeg is NOT bundled. End users must have FFmpeg + ffprobe on PATH.
 - **Video preview**: Click a thumbnail to play in a native `<video>` overlay
 - **Drag-and-drop from OS**: Accept files dragged from Windows Explorer into the sequence
 - **Promote to `builds/`**: Copy `khorvideo-v1` to `builds/khorvideo-v0.2.0/` snapshot per repo workflow
+
+---
+
+## Session 5 — Duration-in-Cache Refactor (PR #22)
+
+**Date:** 2026-05-07  
+**Agent:** Claude Sonnet 4.6 (Claude Code)
+
+### Problem
+Loading a folder with cached thumbnails still triggered one `ffprobe` call per video for duration — even on cache hits where the thumb file already existed. On a 131-file folder this meant 131 redundant ffprobe calls and 131 console window flashes despite zero thumbnail work needed.
+
+### Solution
+Consolidated duration probing into the thumbnail pipeline:
+
+- `probe_duration_secs()` (already in `thumbnailer.rs`) is called once during `do_generate`, immediately after ffmpeg finishes
+- `duration_secs: Option<f64>` added to `CacheWrite`, `ThumbnailReadyPayload`, and `IndexEntry` (with `#[serde(default)]` for backward compat)
+- Cache hits now read `duration_secs` from `index.json` and emit it with the `thumbnail:ready` event
+- `onThumbnailReady` frontend handler updated to carry `durationSecs: number | null` and set both `thumbnailSrc` and `durationLabel` in one state update
+
+### Removed
+| Item | Location |
+|------|----------|
+| `probe_durations` Tauri command | `commands.rs`, `main.rs` invoke_handler |
+| `DurationResult` type | `src/types.ts` |
+| `probeDurations` API wrapper | `src/lib/tauriApi.ts` |
+| `setThumbnailSrc` store action | `useKhorVideoStore.ts` |
+| `probeDurations` fire-and-forget in `loadDirectory` | `useKhorVideoStore.ts` |
+
+### Result
+Second load of any cached folder: zero ffprobe calls, zero console window flashes, duration labels appear immediately alongside thumbnails.

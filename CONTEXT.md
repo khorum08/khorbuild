@@ -66,11 +66,12 @@ A Tauri 2.0 + React 18 + TypeScript + Rust + Zustand desktop app for Windows. **
 - Async thumbnail cache at `%LOCALAPPDATA%\com.khorum.khorvideo\thumbcache\` (SHA-256 keyed, mtime+size validated)
 - Thumbnails in both explorer grid and sequence strip
 - FFmpeg errors surface to console as `[THUMB] filename: <stderr>` warn lines
-- Duration labels auto-probed via ffprobe (fire-and-forget, updates on arrival)
+- Duration labels stored in thumbnail cache; delivered via `thumbnail:ready` event (zero extra ffprobe calls on cache hits)
 - Audio probe (manual, per-sequence)
 - Drag + arrow-key sequence reordering
 - Live FFmpeg concat output streaming to console (tokio::process, BufReader line-by-line)
 - MSI bundle enabled (`bundle.active: true`, `targets: "msi"`)
+- `CREATE_NO_WINDOW` flag on all ffmpeg/ffprobe spawns — no console flash on Windows
 
 **Known runtime requirement:** FFmpeg and ffprobe must be on the user's PATH. Not bundled in installer.
 
@@ -107,4 +108,4 @@ npm run tauri build    # release MSI → src-tauri/target/release/bundle/msi/
 - The branch `claude/amazing-elbakyan-9fa147` is the active worktree branch for Claude Code sessions
 - PRs are merged by the user (khorum08); Claude pushes and creates PRs only
 
-Last updated: 2026-05-07 (session 4)
+Last updated: 2026-05-07 (session 5)
