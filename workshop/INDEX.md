@@ -41,7 +41,7 @@ This file serves as the **single source of truth** for all daily context logs st
 
 | Date       | Log File                              | Description                              | Tags                          | Status    |
 |------------|---------------------------------------|------------------------------------------|-------------------------------|-----------|
-| 2026-05-07 | 05-07-2026-khorvideo-v1-runnable-workflow.md | Wired runnable folder loading, sequence reordering, ffprobe audio checks, FFmpeg concat execution, and Windows dev fixes | prototype, khorvideo, ffmpeg, tauri | Active |
+| 2026-05-07 | 05-07-2026-khorvideo-v1-runnable-workflow.md | Wired runnable folder loading, sequence reordering, ffprobe audio checks, and FFmpeg concat execution | prototype, khorvideo, ffmpeg, tauri | Active |
 | 2026-05-07 | 05-07-2026-khorvideo-v1-scaffold-hardening.md | Hardened KhorVideo v1 scaffold with build config, modular UI panes, Zustand mock state, and initial Tauri command | prototype, khorvideo, tauri, react | Active |
 | 2026-05-06 | 05-06-2026-khorbuild-repo-setup.md   | Initial repo creation + agentic structure setup; file referenced by index but absent in current checkout | repo-setup, agentic, workshop | Missing in checkout |
 

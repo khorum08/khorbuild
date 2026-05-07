@@ -251,7 +251,6 @@ Runtime expectations:
 - `ffmpeg` and `ffprobe` must be available on `PATH`.
 - `npm run tauri dev` is routed through `scripts/run-tauri.mjs`, which adds `--no-watch` for dev runs to avoid the Windows Tauri watcher error around `prototypes/khorvideo-v1/Cargo.toml`.
 - The root `Cargo.toml` is intentional workspace metadata for Cargo/Tauri commands while keeping the Rust app crate in `src-tauri/`.
-- `src-tauri/build.rs` generates `src-tauri/icons/icon.ico` when missing because `tauri-build` needs that default path for Windows dev resources, even while bundling is disabled. The generated binary icon is intentionally ignored by Git.
 
 ### Quick Start Commands
 ```bash

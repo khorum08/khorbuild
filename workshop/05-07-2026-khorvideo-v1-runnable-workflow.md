@@ -89,9 +89,3 @@ A Windows checkout continued to execute a malformed `scripts/tauri-cli.mjs` cont
 ### 2026-05-07 PR Conflict Resolution Note
 
 The active npm `tauri` script should point only to `scripts/run-tauri.mjs`; do not accept both conflicting script entries in `package.json`. The older `scripts/tauri-cli.mjs` wrapper was removed from the prototype because stale merge residue in that file repeatedly produced Windows syntax errors (`tauriBin` duplicate/unexpected identifier). If GitHub shows conflicts, keep the `run-tauri.mjs` path and remove/resolve `tauri-cli.mjs` in favor of the new wrapper.
-
----
-
-## Follow-up: Windows `icon.ico` Build Requirement
-
-Windows `npm run tauri dev` progressed past the Node wrapper and Cargo dependency compilation, then failed in `tauri-build` because `src-tauri/icons/icon.ico` was missing while generating the Windows resource file. Binary files are not allowed in the PR flow, so `src-tauri/build.rs` now generates a small default ICO at that path before calling `tauri_build::build()`. Bundling remains disabled for now, but the icon path is still required for Windows dev resource generation.
