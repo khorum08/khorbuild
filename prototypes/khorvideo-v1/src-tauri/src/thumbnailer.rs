@@ -100,8 +100,8 @@ fn is_video(path: &Path) -> bool {
 // ── thumbnail generation (blocking) ──────────────────────────────────────────
 
 fn generate_thumb(input: &Path, output: &Path) -> bool {
-    // VP8 WebM: 4 s clip, 8 fps, 240 px wide — playable as <video>, controllable via JS
-    let vf = "fps=8,scale=240:-1:flags=lanczos";
+    // VP8 WebM: 4 s clip, 8 fps, 240 px wide — -2 forces even height required by libvpx
+    let vf = "fps=8,scale=240:-2:flags=lanczos";
     Command::new("ffmpeg")
         .args([
             "-y",
