@@ -10,6 +10,11 @@ use std::{
 use tauri::Emitter;
 use tokio::io::{AsyncBufReadExt, BufReader as AsyncBufReader};
 use tokio::process::Command as AsyncCommand;
+#[cfg(windows)]
+use std::os::windows::process::CommandExt;
+
+#[cfg(windows)]
+const CREATE_NO_WINDOW: u32 = 0x08000000;
 
 #[derive(Debug, Serialize)]
 #[serde(rename_all = "camelCase")]
@@ -124,6 +129,9 @@ pub fn probe_audio(path: String) -> Result<ProbeResult, String> {
             "csv=p=0",
             &path,
         ])
+        .stdout(Stdio::piped())
+        .stderr(Stdio::piped())
+        .creation_flags(CREATE_NO_WINDOW)
         .output()
         .map_err(|error| format!("failed to run ffprobe: {error}"))?;
 
@@ -148,6 +156,9 @@ fn probe_duration_secs(path: &str) -> Option<f64> {
             "default=noprint_wrappers=1:nokey=1",
             path,
         ])
+        .stdout(Stdio::piped())
+        .stderr(Stdio::null())
+        .creation_flags(CREATE_NO_WINDOW)
         .output()
         .ok()?;
     let raw = String::from_utf8_lossy(&output.stdout);
@@ -222,6 +233,7 @@ pub async fn run_concat(job: ConcatJob, app: tauri::AppHandle) -> Result<ConcatR
         ])
         .stdout(Stdio::piped())
         .stderr(Stdio::piped())
+        .creation_flags(CREATE_NO_WINDOW)
         .spawn()
         .map_err(|error| format!("failed to spawn ffmpeg: {error}"))?;
 

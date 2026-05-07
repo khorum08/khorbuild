@@ -9,6 +9,11 @@ use std::{
     },
     time::UNIX_EPOCH,
 };
+#[cfg(windows)]
+use std::os::windows::process::CommandExt;
+
+#[cfg(windows)]
+const CREATE_NO_WINDOW: u32 = 0x08000000;
 
 use serde::{Deserialize, Serialize};
 use sha2::{Digest, Sha256};
@@ -129,6 +134,7 @@ fn generate_thumb(input: &Path, output: &Path) -> Result<(), String> {
         ])
         .stdout(Stdio::null())
         .stderr(Stdio::piped())
+        .creation_flags(CREATE_NO_WINDOW)
         .output()
         .map_err(|e| format!("failed to spawn ffmpeg: {e}"))?;
 
