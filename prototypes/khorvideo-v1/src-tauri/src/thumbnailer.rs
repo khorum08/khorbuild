@@ -100,7 +100,7 @@ fn is_video(path: &Path) -> bool {
 // ── thumbnail generation (blocking) ──────────────────────────────────────────
 
 fn generate_thumb(input: &Path, output: &Path) -> bool {
-    // Animated WebP: 4 s clip, 8 fps, 240 px wide
+    // VP8 WebM: 4 s clip, 8 fps, 240 px wide — playable as <video>, controllable via JS
     let vf = "fps=8,scale=240:-1:flags=lanczos";
     Command::new("ffmpeg")
         .args([
@@ -113,10 +113,11 @@ fn generate_thumb(input: &Path, output: &Path) -> bool {
             &input.to_string_lossy(),
             "-vf",
             vf,
-            "-loop",
-            "0",
-            "-quality",
-            "70",
+            "-c:v",
+            "libvpx",
+            "-b:v",
+            "300k",
+            "-an",
             &output.to_string_lossy(),
         ])
         .stdout(Stdio::null())
@@ -131,7 +132,7 @@ fn do_generate(path: &Path, cache_dir: &Path, hash: &str) -> Option<(String, u64
         return None;
     }
     let (mtime, size) = file_mtime_size(path)?;
-    let thumb_name = format!("{}.webp", hash);
+    let thumb_name = format!("{}.webm", hash);
     let thumb_path = cache_dir.join(&thumb_name);
     if generate_thumb(path, &thumb_path) {
         Some((thumb_name, mtime, size))
@@ -276,7 +277,9 @@ pub fn spawn_orphan_cleanup(cache_dir: PathBuf, index: Arc<Mutex<CacheIndex>>) {
         let orphans: Vec<(String, String)> = tauri::async_runtime::spawn_blocking(move || {
             snapshot
                 .into_iter()
-                .filter(|(_, path, _)| !Path::new(path).exists())
+                .filter(|(_, path, thumb)| {
+                    !Path::new(path).exists() || !cache_dir_c.join(thumb).exists()
+                })
                 .map(|(hash, _, thumb)| (hash, thumb))
                 .collect()
         })
@@ -288,7 +291,7 @@ pub fn spawn_orphan_cleanup(cache_dir: PathBuf, index: Arc<Mutex<CacheIndex>>) {
         }
 
         for (_, thumb) in &orphans {
-            let _ = fs::remove_file(cache_dir_c.join(thumb));
+            let _ = fs::remove_file(cache_dir.join(thumb));
         }
 
         let index_path = cache_dir.join("index.json");
