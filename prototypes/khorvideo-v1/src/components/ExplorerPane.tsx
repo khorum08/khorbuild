@@ -8,6 +8,7 @@ type ExplorerPaneProps = {
   onAddToSequence: (video: VideoFile) => void
   onFolderInputChange: (path: string) => void
   onLoadFolder: () => void
+  onSelectFolder: () => void
 }
 
 export function ExplorerPane({
@@ -18,6 +19,7 @@ export function ExplorerPane({
   onAddToSequence,
   onFolderInputChange,
   onLoadFolder,
+  onSelectFolder,
 }: ExplorerPaneProps) {
   return (
     <main className="explorer-pane">
@@ -42,7 +44,12 @@ export function ExplorerPane({
             placeholder="Enter folder path"
             value={folderInput}
           />
-          <button className="secondary-button" disabled={isLoading} type="submit">
+          <button
+            className="secondary-button"
+            disabled={isLoading}
+            type="button"
+            onClick={onSelectFolder}
+          >
             {isLoading ? 'Loading…' : 'Load Folder'}
           </button>
         </form>
