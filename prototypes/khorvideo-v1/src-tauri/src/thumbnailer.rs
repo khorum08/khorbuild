@@ -177,7 +177,7 @@ pub async fn thumbnail_worker(
             let idx = index.lock().await;
             idx.get(&hash).and_then(|entry| {
                 file_mtime_size(&path).and_then(|(mtime, size)| {
-                    if entry.mtime == mtime && entry.size == size {
+                    if entry.mtime == mtime && entry.size == size && entry.thumb.ends_with(".webm") {
                         Some(cache_dir.join(&entry.thumb))
                     } else {
                         None
@@ -297,7 +297,9 @@ pub fn spawn_orphan_cleanup(cache_dir: PathBuf, index: Arc<Mutex<CacheIndex>>) {
             snapshot
                 .into_iter()
                 .filter(|(_, path, thumb)| {
-                    !Path::new(path).exists() || !cache_dir_c.join(thumb).exists()
+                    !Path::new(path).exists()
+                        || !cache_dir_c.join(thumb).exists()
+                        || !thumb.ends_with(".webm")
                 })
                 .map(|(hash, _, thumb)| (hash, thumb))
                 .collect()
