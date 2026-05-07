@@ -73,3 +73,9 @@ Tradeoff: Rust hot-reload watching is disabled for this prototype dev command. F
 ## Follow-up: Windows `spawn EINVAL` Fix
 
 After the `--no-watch` wrapper landed, Windows reported `Error: spawn EINVAL` from `scripts/tauri-cli.mjs` while trying to spawn `node_modules/.bin/tauri.cmd` with `shell: false`. The wrapper now enables `shell: true` only on Windows so `.cmd` shims are launched through the Windows command shell, while Linux/macOS continue to spawn the binary directly.
+
+---
+
+## Follow-up: Duplicate Wrapper Declaration Cleanup
+
+A local Windows checkout reported `SyntaxError: Identifier 'tauriBin' has already been declared`, which indicates a manual patch or merge left both the old and new wrapper declarations in `scripts/tauri-cli.mjs`. The wrapper was rewritten with clearer variable names (`tauriExecutable`, `requestedArgs`, `tauriArgs`) so the intended full-file contents are unambiguous. If this error appears locally, replace the entire wrapper file rather than editing individual lines.

@@ -6,6 +6,14 @@ import path from 'node:path'
 const scriptDir = path.dirname(fileURLToPath(import.meta.url))
 const appRoot = path.resolve(scriptDir, '..')
 const isWindows = process.platform === 'win32'
+const tauriExecutable = path.join(appRoot, 'node_modules', '.bin', isWindows ? 'tauri.cmd' : 'tauri')
+const requestedArgs = process.argv.slice(2)
+const tauriArgs =
+  requestedArgs[0] === 'dev' && !requestedArgs.includes('--no-watch')
+    ? ['dev', '--no-watch', ...requestedArgs.slice(1)]
+    : requestedArgs
+
+const child = spawn(tauriExecutable, tauriArgs, {
 const tauriBin = path.join(appRoot, 'node_modules', '.bin', isWindows ? 'tauri.cmd' : 'tauri')
 const tauriBin = path.join(appRoot, 'node_modules', '.bin', process.platform === 'win32' ? 'tauri.cmd' : 'tauri')
 const args = process.argv.slice(2)
