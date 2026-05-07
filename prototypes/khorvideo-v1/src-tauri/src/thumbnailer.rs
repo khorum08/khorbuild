@@ -43,6 +43,13 @@ pub struct ThumbnailReadyPayload {
     pub thumb_path: String,
 }
 
+#[derive(Clone, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct ThumbnailErrorPayload {
+    pub path: String,
+    pub error: String,
+}
+
 // ── cache index ───────────────────────────────────────────────────────────────
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
@@ -99,10 +106,10 @@ fn is_video(path: &Path) -> bool {
 
 // ── thumbnail generation (blocking) ──────────────────────────────────────────
 
-fn generate_thumb(input: &Path, output: &Path) -> bool {
+fn generate_thumb(input: &Path, output: &Path) -> Result<(), String> {
     // VP8 WebM: 4 s clip, 8 fps, 240 px wide — -2 forces even height required by libvpx
     let vf = "fps=8,scale=240:-2:flags=lanczos";
-    Command::new("ffmpeg")
+    let out = Command::new("ffmpeg")
         .args([
             "-y",
             "-ss",
@@ -121,24 +128,27 @@ fn generate_thumb(input: &Path, output: &Path) -> bool {
             &output.to_string_lossy(),
         ])
         .stdout(Stdio::null())
-        .stderr(Stdio::null())
-        .status()
-        .map(|s| s.success())
-        .unwrap_or(false)
+        .stderr(Stdio::piped())
+        .output()
+        .map_err(|e| format!("failed to spawn ffmpeg: {e}"))?;
+
+    if out.status.success() {
+        Ok(())
+    } else {
+        Err(String::from_utf8_lossy(&out.stderr).trim().to_owned())
+    }
 }
 
-fn do_generate(path: &Path, cache_dir: &Path, hash: &str) -> Option<(String, u64, u64)> {
+// Returns Ok(Some(...)) on success, Ok(None) if path is not a video, Err(msg) on ffmpeg failure
+fn do_generate(path: &Path, cache_dir: &Path, hash: &str) -> Result<Option<(String, u64, u64)>, String> {
     if !is_video(path) {
-        return None;
+        return Ok(None);
     }
-    let (mtime, size) = file_mtime_size(path)?;
+    let (mtime, size) = file_mtime_size(path).ok_or_else(|| "could not read file metadata".to_owned())?;
     let thumb_name = format!("{}.webm", hash);
     let thumb_path = cache_dir.join(&thumb_name);
-    if generate_thumb(path, &thumb_path) {
-        Some((thumb_name, mtime, size))
-    } else {
-        None
-    }
+    generate_thumb(path, &thumb_path)?;
+    Ok(Some((thumb_name, mtime, size)))
 }
 
 // ── thumbnail worker ──────────────────────────────────────────────────────────
@@ -214,23 +224,32 @@ pub async fn thumbnail_worker(
             })
             .await;
 
-            if let Ok(Some((thumb_name, mtime, size))) = result {
-                let thumb_path = cache_dir.join(&thumb_name);
-                let _ = app.emit(
-                    "thumbnail:ready",
-                    ThumbnailReadyPayload {
-                        path: original_path.clone(),
-                        thumb_path: thumb_path.to_string_lossy().into_owned(),
-                    },
-                );
-                let _ = cache_tx
-                    .send(CacheWrite {
-                        original_path,
-                        mtime,
-                        size,
-                        thumb_name,
-                    })
-                    .await;
+            match result {
+                Ok(Ok(Some((thumb_name, mtime, size)))) => {
+                    let thumb_path = cache_dir.join(&thumb_name);
+                    let _ = app.emit(
+                        "thumbnail:ready",
+                        ThumbnailReadyPayload {
+                            path: original_path.clone(),
+                            thumb_path: thumb_path.to_string_lossy().into_owned(),
+                        },
+                    );
+                    let _ = cache_tx
+                        .send(CacheWrite {
+                            original_path,
+                            mtime,
+                            size,
+                            thumb_name,
+                        })
+                        .await;
+                }
+                Ok(Err(error)) => {
+                    let _ = app.emit(
+                        "thumbnail:error",
+                        ThumbnailErrorPayload { path: original_path, error },
+                    );
+                }
+                _ => {}
             }
         });
     }

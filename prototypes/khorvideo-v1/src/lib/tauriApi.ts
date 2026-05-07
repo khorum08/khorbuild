@@ -42,6 +42,14 @@ export async function onThumbnailReady(
   })
 }
 
+export async function onThumbnailError(
+  handler: (path: string, error: string) => void,
+): Promise<() => void> {
+  return listen<{ path: string; error: string }>('thumbnail:error', (event) => {
+    handler(event.payload.path, event.payload.error)
+  })
+}
+
 export async function runConcat(inputPaths: string[], outputPath: string): Promise<ConcatResult> {
   return invoke<ConcatResult>('run_concat', {
     job: {

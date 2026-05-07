@@ -1,5 +1,5 @@
 import { create } from 'zustand'
-import { getHomeDir, listDirectory, onConcatLog, onThumbnailReady, openFolderDialog, probeAudio, probeDurations, requestThumbnails, runConcat } from '../lib/tauriApi'
+import { getHomeDir, listDirectory, onConcatLog, onThumbnailError, onThumbnailReady, openFolderDialog, probeAudio, probeDurations, requestThumbnails, runConcat } from '../lib/tauriApi'
 import type { ConsoleLine, ConcatResult, DirectoryEntry, FolderNode, VideoFile } from '../types'
 
 let thumbnailGeneration = 0
@@ -101,9 +101,19 @@ export const useKhorVideoStore = create<KhorVideoState>((set, get) => ({
   isRunningConcat: false,
   lastConcatResult: null,
   init: async () => {
-    // Set up thumbnail event listener (persists for app lifetime)
+    // Set up thumbnail event listeners (persist for app lifetime)
     onThumbnailReady((path, thumbSrc) => {
       get().setThumbnailSrc(path, thumbSrc)
+    }).catch(() => {})
+
+    onThumbnailError((path, error) => {
+      const name = path.split(/[\\/]/).pop() ?? path
+      set((state) => ({
+        consoleLines: [
+          ...state.consoleLines,
+          createLogLine('warn', `[THUMB] ${name}: ${error}`),
+        ],
+      }))
     }).catch(() => {})
 
     try {
