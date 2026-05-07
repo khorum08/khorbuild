@@ -7,6 +7,9 @@ use std::{
     process::{Command, Stdio},
     sync::atomic::Ordering,
 };
+use tauri::Emitter;
+use tokio::io::{AsyncBufReadExt, BufReader as AsyncBufReader};
+use tokio::process::Command as AsyncCommand;
 
 #[derive(Debug, Serialize)]
 #[serde(rename_all = "camelCase")]
@@ -128,7 +131,7 @@ pub fn probe_audio(path: String) -> Result<ProbeResult, String> {
 }
 
 #[tauri::command]
-pub fn run_concat(job: ConcatJob) -> Result<ConcatResult, String> {
+pub async fn run_concat(job: ConcatJob, app: tauri::AppHandle) -> Result<ConcatResult, String> {
     if job.input_paths.len() < 2 {
         return Err("At least two input files are required for concat".to_owned());
     }
@@ -163,7 +166,7 @@ pub fn run_concat(job: ConcatJob) -> Result<ConcatResult, String> {
         concat_list_arg, job.output_path
     );
 
-    let output = Command::new("ffmpeg")
+    let mut child = AsyncCommand::new("ffmpeg")
         .args([
             "-hide_banner",
             "-y",
@@ -179,17 +182,52 @@ pub fn run_concat(job: ConcatJob) -> Result<ConcatResult, String> {
         ])
         .stdout(Stdio::piped())
         .stderr(Stdio::piped())
-        .output()
-        .map_err(|error| format!("failed to run ffmpeg: {error}"))?;
+        .spawn()
+        .map_err(|error| format!("failed to spawn ffmpeg: {error}"))?;
+
+    let raw_stderr = child.stderr.take().unwrap();
+    let raw_stdout = child.stdout.take().unwrap();
+
+    let app_for_stderr = app.clone();
+    let stderr_task = tokio::spawn(async move {
+        let mut lines = AsyncBufReader::new(raw_stderr).lines();
+        let mut collected = String::new();
+        while let Ok(Some(line)) = lines.next_line().await {
+            let _ = app_for_stderr.emit("concat:log", serde_json::json!({ "stream": "stderr", "line": line }));
+            if !collected.is_empty() {
+                collected.push('\n');
+            }
+            collected.push_str(&line);
+        }
+        collected
+    });
+
+    let app_for_stdout = app.clone();
+    let stdout_task = tokio::spawn(async move {
+        let mut lines = AsyncBufReader::new(raw_stdout).lines();
+        let mut collected = String::new();
+        while let Ok(Some(line)) = lines.next_line().await {
+            let _ = app_for_stdout.emit("concat:log", serde_json::json!({ "stream": "stdout", "line": line }));
+            if !collected.is_empty() {
+                collected.push('\n');
+            }
+            collected.push_str(&line);
+        }
+        collected
+    });
+
+    let status = child.wait().await.map_err(|error| error.to_string())?;
+    let stderr = stderr_task.await.unwrap_or_default();
+    let stdout = stdout_task.await.unwrap_or_default();
 
     let _ = fs::remove_file(&concat_list_path);
 
     Ok(ConcatResult {
         command,
         output_path: job.output_path,
-        exit_code: output.status.code(),
-        stdout: String::from_utf8_lossy(&output.stdout).into_owned(),
-        stderr: String::from_utf8_lossy(&output.stderr).into_owned(),
+        exit_code: status.code(),
+        stdout,
+        stderr,
     })
 }
 

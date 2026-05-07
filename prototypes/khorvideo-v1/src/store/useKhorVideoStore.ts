@@ -1,5 +1,5 @@
 import { create } from 'zustand'
-import { getHomeDir, listDirectory, onThumbnailReady, openFolderDialog, probeAudio, requestThumbnails, runConcat } from '../lib/tauriApi'
+import { getHomeDir, listDirectory, onConcatLog, onThumbnailReady, openFolderDialog, probeAudio, requestThumbnails, runConcat } from '../lib/tauriApi'
 import type { ConsoleLine, ConcatResult, DirectoryEntry, FolderNode, VideoFile } from '../types'
 
 let thumbnailGeneration = 0
@@ -290,7 +290,14 @@ export const useKhorVideoStore = create<KhorVideoState>((set, get) => ({
       consoleLines: [...state.consoleLines, createLogLine('info', `[INFO] Starting FFmpeg concat to ${outputPath}`)],
     }))
 
+    let unlisten: (() => void) | undefined
     try {
+      unlisten = await onConcatLog((_stream, line) => {
+        set((state) => ({
+          consoleLines: [...state.consoleLines, createLogLine('info', line)],
+        }))
+      })
+
       const result = await runConcat(
         sequence.map((file) => file.path),
         outputPath,
@@ -301,10 +308,8 @@ export const useKhorVideoStore = create<KhorVideoState>((set, get) => ({
         lastConcatResult: result,
         consoleLines: [
           ...state.consoleLines,
-          createLogLine(result.exitCode === 0 ? 'success' : 'error', `[INFO] FFmpeg exited with code ${result.exitCode ?? 'unknown'}`),
           createLogLine('info', `[CMD] ${result.command}`),
-          ...(result.stderr ? [createLogLine(result.exitCode === 0 ? 'info' : 'error', result.stderr)] : []),
-          ...(result.stdout ? [createLogLine('info', result.stdout)] : []),
+          createLogLine(result.exitCode === 0 ? 'success' : 'error', `[INFO] FFmpeg exited with code ${result.exitCode ?? 'unknown'}`),
         ],
       }))
     } catch (error) {
@@ -315,6 +320,8 @@ export const useKhorVideoStore = create<KhorVideoState>((set, get) => ({
           createLogLine('error', `[ERROR] FFmpeg concat failed: ${error instanceof Error ? error.message : String(error)}`),
         ],
       }))
+    } finally {
+      unlisten?.()
     }
   },
 }))
