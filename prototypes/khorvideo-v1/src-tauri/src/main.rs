@@ -6,6 +6,7 @@ mod commands;
 fn main() {
     tauri::Builder::default()
         .invoke_handler(tauri::generate_handler![
+            commands::get_home_dir,
             commands::list_directory,
             commands::probe_audio,
             commands::run_concat

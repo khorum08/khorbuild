@@ -43,6 +43,13 @@ pub struct ConcatResult {
 const VIDEO_EXTENSIONS: &[&str] = &["avi", "m4v", "mkv", "mov", "mp4", "webm", "wmv"];
 
 #[tauri::command]
+pub fn get_home_dir() -> Result<String, String> {
+    std::env::var("USERPROFILE")
+        .or_else(|_| std::env::var("HOME"))
+        .map_err(|_| "Could not determine home directory".to_owned())
+}
+
+#[tauri::command]
 pub fn list_directory(path: String) -> Result<Vec<DirectoryEntry>, String> {
     let directory = Path::new(&path);
 

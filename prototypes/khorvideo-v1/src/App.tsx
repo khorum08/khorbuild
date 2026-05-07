@@ -1,3 +1,4 @@
+import { useEffect } from 'react'
 import { ConsolePane } from './components/ConsolePane'
 import { ExplorerPane } from './components/ExplorerPane'
 import { SequencePane } from './components/SequencePane'
@@ -26,7 +27,10 @@ function App() {
   const clearSequence = useKhorVideoStore((state) => state.clearSequence)
   const probeSequenceAudio = useKhorVideoStore((state) => state.probeSequenceAudio)
   const runSequenceConcat = useKhorVideoStore((state) => state.runSequenceConcat)
+  const init = useKhorVideoStore((state) => state.init)
   const hasAudioWarnings = sequence.some((file) => file.audioStatus === 'missing')
+
+  useEffect(() => { void init() }, [])
 
   return (
     <div className="app-shell">
