@@ -65,7 +65,16 @@ export function ExplorerPane({
               <button className="thumbnail-button" type="button" onClick={() => onAddToSequence(file)}>
                 <div className={`thumbnail-surface tone-${file.thumbnailTone}`}>
                   {file.thumbnailSrc ? (
-                    <img src={file.thumbnailSrc} alt={file.name} className="thumbnail-img" />
+                    <video
+                      src={file.thumbnailSrc}
+                      className="thumbnail-img"
+                      muted
+                      loop
+                      playsInline
+                      preload="auto"
+                      onMouseEnter={(e) => void e.currentTarget.play()}
+                      onMouseLeave={(e) => { e.currentTarget.pause(); e.currentTarget.currentTime = 0 }}
+                    />
                   ) : (
                     <span className="play-glyph">▶</span>
                   )}

@@ -74,7 +74,16 @@ export function SequencePane({
               <div className="sequence-index">{index + 1}</div>
               <div className={`sequence-thumb tone-${file.thumbnailTone}`}>
                 {file.thumbnailSrc ? (
-                  <img src={file.thumbnailSrc} alt={file.name} className="sequence-thumb-img" />
+                  <video
+                    src={file.thumbnailSrc}
+                    className="sequence-thumb-img"
+                    muted
+                    loop
+                    playsInline
+                    preload="auto"
+                    onMouseEnter={(e) => void e.currentTarget.play()}
+                    onMouseLeave={(e) => { e.currentTarget.pause(); e.currentTarget.currentTime = 0 }}
+                  />
                 ) : (
                   '▶'
                 )}
