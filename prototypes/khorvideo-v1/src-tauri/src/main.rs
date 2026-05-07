@@ -48,7 +48,6 @@ fn main() {
             commands::get_home_dir,
             commands::list_directory,
             commands::probe_audio,
-            commands::probe_durations,
             commands::run_concat,
             commands::request_thumbnails,
         ])

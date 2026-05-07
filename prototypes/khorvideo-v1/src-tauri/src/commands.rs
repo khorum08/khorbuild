@@ -33,12 +33,6 @@ pub struct ProbeResult {
     has_audio: bool,
 }
 
-#[derive(Debug, Serialize)]
-#[serde(rename_all = "camelCase")]
-pub struct DurationResult {
-    path: String,
-    duration_secs: Option<f64>,
-}
 
 #[derive(Debug, Deserialize)]
 #[serde(rename_all = "camelCase")]
@@ -145,41 +139,6 @@ pub fn probe_audio(path: String) -> Result<ProbeResult, String> {
     })
 }
 
-fn probe_duration_secs(path: &str) -> Option<f64> {
-    let output = Command::new("ffprobe")
-        .args([
-            "-v",
-            "error",
-            "-show_entries",
-            "format=duration",
-            "-of",
-            "default=noprint_wrappers=1:nokey=1",
-            path,
-        ])
-        .stdout(Stdio::piped())
-        .stderr(Stdio::null())
-        .creation_flags(CREATE_NO_WINDOW)
-        .output()
-        .ok()?;
-    let raw = String::from_utf8_lossy(&output.stdout);
-    let secs: f64 = raw.trim().parse().ok()?;
-    if secs.is_finite() && secs > 0.0 { Some(secs) } else { None }
-}
-
-#[tauri::command]
-pub async fn probe_durations(paths: Vec<String>) -> Result<Vec<DurationResult>, String> {
-    tauri::async_runtime::spawn_blocking(move || {
-        paths
-            .into_iter()
-            .map(|path| {
-                let duration_secs = probe_duration_secs(&path);
-                DurationResult { path, duration_secs }
-            })
-            .collect()
-    })
-    .await
-    .map_err(|error| error.to_string())
-}
 
 #[tauri::command]
 pub async fn run_concat(job: ConcatJob, app: tauri::AppHandle) -> Result<ConcatResult, String> {
