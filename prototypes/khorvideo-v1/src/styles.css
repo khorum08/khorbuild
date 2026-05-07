@@ -234,6 +234,14 @@ button {
   justify-content: center;
 }
 
+.thumbnail-img {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
 .play-glyph {
   display: grid;
   width: 44px;
