@@ -39,6 +39,7 @@ pub struct CacheWrite {
     pub mtime: u64,
     pub size: u64,
     pub thumb_name: String,
+    pub duration_secs: Option<f64>,
 }
 
 #[derive(Clone, Serialize)]
@@ -46,6 +47,7 @@ pub struct CacheWrite {
 pub struct ThumbnailReadyPayload {
     pub path: String,
     pub thumb_path: String,
+    pub duration_secs: Option<f64>,
 }
 
 #[derive(Clone, Serialize)]
@@ -63,6 +65,8 @@ pub struct IndexEntry {
     pub mtime: u64,
     pub size: u64,
     pub thumb: String,
+    #[serde(default)]
+    pub duration_secs: Option<f64>,
 }
 
 pub type CacheIndex = HashMap<String, IndexEntry>;
@@ -145,8 +149,29 @@ fn generate_thumb(input: &Path, output: &Path) -> Result<(), String> {
     }
 }
 
+fn probe_duration_secs(path: &Path) -> Option<f64> {
+    let out = Command::new("ffprobe")
+        .args([
+            "-v",
+            "error",
+            "-show_entries",
+            "format=duration",
+            "-of",
+            "default=noprint_wrappers=1:nokey=1",
+            &path.to_string_lossy(),
+        ])
+        .stdout(Stdio::piped())
+        .stderr(Stdio::null())
+        .creation_flags(CREATE_NO_WINDOW)
+        .output()
+        .ok()?;
+    let raw = String::from_utf8_lossy(&out.stdout);
+    let secs: f64 = raw.trim().parse().ok()?;
+    if secs.is_finite() && secs > 0.0 { Some(secs) } else { None }
+}
+
 // Returns Ok(Some(...)) on success, Ok(None) if path is not a video, Err(msg) on ffmpeg failure
-fn do_generate(path: &Path, cache_dir: &Path, hash: &str) -> Result<Option<(String, u64, u64)>, String> {
+fn do_generate(path: &Path, cache_dir: &Path, hash: &str) -> Result<Option<(String, u64, u64, Option<f64>)>, String> {
     if !is_video(path) {
         return Ok(None);
     }
@@ -154,7 +179,8 @@ fn do_generate(path: &Path, cache_dir: &Path, hash: &str) -> Result<Option<(Stri
     let thumb_name = format!("{}.webm", hash);
     let thumb_path = cache_dir.join(&thumb_name);
     generate_thumb(path, &thumb_path)?;
-    Ok(Some((thumb_name, mtime, size)))
+    let duration_secs = probe_duration_secs(path);
+    Ok(Some((thumb_name, mtime, size, duration_secs)))
 }
 
 // ── thumbnail worker ──────────────────────────────────────────────────────────
@@ -179,12 +205,12 @@ pub async fn thumbnail_worker(
         let gen = req.generation;
 
         // Cache hit check — hold lock only briefly
-        let cached = {
+        let cached: Option<(PathBuf, Option<f64>)> = {
             let idx = index.lock().await;
             idx.get(&hash).and_then(|entry| {
                 file_mtime_size(&path).and_then(|(mtime, size)| {
                     if entry.mtime == mtime && entry.size == size && entry.thumb.ends_with(".webm") {
-                        Some(cache_dir.join(&entry.thumb))
+                        Some((cache_dir.join(&entry.thumb), entry.duration_secs))
                     } else {
                         None
                     }
@@ -192,13 +218,14 @@ pub async fn thumbnail_worker(
             })
         };
 
-        if let Some(thumb_path) = cached {
+        if let Some((thumb_path, duration_secs)) = cached {
             if thumb_path.exists() {
                 let _ = app.emit(
                     "thumbnail:ready",
                     ThumbnailReadyPayload {
                         path: req.path,
                         thumb_path: thumb_path.to_string_lossy().into_owned(),
+                        duration_secs,
                     },
                 );
                 continue;
@@ -231,13 +258,14 @@ pub async fn thumbnail_worker(
             .await;
 
             match result {
-                Ok(Ok(Some((thumb_name, mtime, size)))) => {
+                Ok(Ok(Some((thumb_name, mtime, size, duration_secs)))) => {
                     let thumb_path = cache_dir.join(&thumb_name);
                     let _ = app.emit(
                         "thumbnail:ready",
                         ThumbnailReadyPayload {
                             path: original_path.clone(),
                             thumb_path: thumb_path.to_string_lossy().into_owned(),
+                            duration_secs,
                         },
                     );
                     let _ = cache_tx
@@ -246,6 +274,7 @@ pub async fn thumbnail_worker(
                             mtime,
                             size,
                             thumb_name,
+                            duration_secs,
                         })
                         .await;
                 }
@@ -280,6 +309,7 @@ pub async fn cache_manager(
                 mtime: write.mtime,
                 size: write.size,
                 thumb: write.thumb_name,
+                duration_secs: write.duration_secs,
             },
         );
         save_index(&index_path, &idx);

@@ -1,7 +1,7 @@
 import { convertFileSrc, invoke } from '@tauri-apps/api/core'
 import { listen } from '@tauri-apps/api/event'
 import { open } from '@tauri-apps/plugin-dialog'
-import type { ConcatResult, DirectoryEntry, DurationResult, ProbeResult } from '../types'
+import type { ConcatResult, DirectoryEntry, ProbeResult } from '../types'
 
 type WindowWithTauri = Window & {
   __TAURI_INTERNALS__?: unknown
@@ -26,19 +26,15 @@ export async function probeAudio(path: string): Promise<ProbeResult> {
   return invoke<ProbeResult>('probe_audio', { path })
 }
 
-export async function probeDurations(paths: string[]): Promise<DurationResult[]> {
-  return invoke<DurationResult[]>('probe_durations', { paths })
-}
-
 export async function requestThumbnails(paths: string[], generation: number): Promise<void> {
   return invoke('request_thumbnails', { paths, generation })
 }
 
 export async function onThumbnailReady(
-  handler: (path: string, thumbSrc: string) => void,
+  handler: (path: string, thumbSrc: string, durationSecs: number | null) => void,
 ): Promise<() => void> {
-  return listen<{ path: string; thumbPath: string }>('thumbnail:ready', (event) => {
-    handler(event.payload.path, convertFileSrc(event.payload.thumbPath))
+  return listen<{ path: string; thumbPath: string; durationSecs: number | null }>('thumbnail:ready', (event) => {
+    handler(event.payload.path, convertFileSrc(event.payload.thumbPath), event.payload.durationSecs)
   })
 }
 

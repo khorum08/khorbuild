@@ -38,11 +38,6 @@ export type ProbeResult = {
   hasAudio: boolean
 }
 
-export type DurationResult = {
-  path: string
-  durationSecs: number | null
-}
-
 export type ConcatResult = {
   command: string
   outputPath: string

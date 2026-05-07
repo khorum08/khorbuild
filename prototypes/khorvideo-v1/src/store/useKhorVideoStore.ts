@@ -1,5 +1,5 @@
 import { create } from 'zustand'
-import { getHomeDir, listDirectory, onConcatLog, onThumbnailError, onThumbnailReady, openFolderDialog, probeAudio, probeDurations, requestThumbnails, runConcat } from '../lib/tauriApi'
+import { getHomeDir, listDirectory, onConcatLog, onThumbnailError, onThumbnailReady, openFolderDialog, probeAudio, requestThumbnails, runConcat } from '../lib/tauriApi'
 import type { ConsoleLine, ConcatResult, DirectoryEntry, FolderNode, VideoFile } from '../types'
 
 let thumbnailGeneration = 0
@@ -27,7 +27,6 @@ type KhorVideoState = {
   lastConcatResult: ConcatResult | null
   init: () => Promise<void>
   selectAndLoadFolder: () => Promise<void>
-  setThumbnailSrc: (path: string, src: string) => void
   setFolderInput: (path: string) => void
   setOutputPath: (path: string) => void
   loadDirectory: (path?: string) => Promise<void>
@@ -102,8 +101,19 @@ export const useKhorVideoStore = create<KhorVideoState>((set, get) => ({
   lastConcatResult: null,
   init: async () => {
     // Set up thumbnail event listeners (persist for app lifetime)
-    onThumbnailReady((path, thumbSrc) => {
-      get().setThumbnailSrc(path, thumbSrc)
+    onThumbnailReady((path, thumbSrc, durationSecs) => {
+      set((state) => ({
+        explorerFiles: state.explorerFiles.map((f) =>
+          f.path === path
+            ? { ...f, thumbnailSrc: thumbSrc, ...(durationSecs !== null && { durationLabel: formatDuration(durationSecs) }) }
+            : f,
+        ),
+        sequence: state.sequence.map((f) =>
+          f.path === path
+            ? { ...f, thumbnailSrc: thumbSrc, ...(durationSecs !== null && { durationLabel: formatDuration(durationSecs) }) }
+            : f,
+        ),
+      }))
     }).catch(() => {})
 
     onThumbnailError((path, error) => {
@@ -129,15 +139,6 @@ export const useKhorVideoStore = create<KhorVideoState>((set, get) => ({
       }))
     }
   },
-  setThumbnailSrc: (path, src) =>
-    set((state) => ({
-      explorerFiles: state.explorerFiles.map((f) =>
-        f.path === path ? { ...f, thumbnailSrc: src } : f,
-      ),
-      sequence: state.sequence.map((f) =>
-        f.path === path ? { ...f, thumbnailSrc: src } : f,
-      ),
-    })),
   selectAndLoadFolder: async () => {
     const { activeFolder, folderInput } = get()
     const startPath = activeFolder || folderInput || undefined
@@ -191,21 +192,6 @@ export const useKhorVideoStore = create<KhorVideoState>((set, get) => ({
         const gen = thumbnailGeneration
         requestThumbnails(videos.map((v) => v.path), gen).catch(() => {})
 
-        // Probe durations (fire and forget, update labels as they arrive)
-        probeDurations(videos.map((v) => v.path))
-          .then((results) => {
-            set((state) => ({
-              explorerFiles: state.explorerFiles.map((f) => {
-                const r = results.find((d) => d.path === f.path)
-                return r ? { ...f, durationLabel: formatDuration(r.durationSecs) } : f
-              }),
-              sequence: state.sequence.map((f) => {
-                const r = results.find((d) => d.path === f.path)
-                return r ? { ...f, durationLabel: formatDuration(r.durationSecs) } : f
-              }),
-            }))
-          })
-          .catch(() => {})
       }
     } catch (error) {
       set((state) => ({
