@@ -1,8 +1,18 @@
 import { create } from 'zustand'
-import { getHomeDir, listDirectory, onConcatLog, onThumbnailReady, openFolderDialog, probeAudio, requestThumbnails, runConcat } from '../lib/tauriApi'
+import { getHomeDir, listDirectory, onConcatLog, onThumbnailReady, openFolderDialog, probeAudio, probeDurations, requestThumbnails, runConcat } from '../lib/tauriApi'
 import type { ConsoleLine, ConcatResult, DirectoryEntry, FolderNode, VideoFile } from '../types'
 
 let thumbnailGeneration = 0
+
+const formatDuration = (secs: number | null): string => {
+  if (secs === null || secs <= 0) return '--:--'
+  const total = Math.round(secs)
+  const h = Math.floor(total / 3600)
+  const m = Math.floor((total % 3600) / 60)
+  const s = total % 60
+  if (h > 0) return `${h}:${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`
+  return `${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`
+}
 
 type KhorVideoState = {
   activeFolder: string
@@ -165,11 +175,27 @@ export const useKhorVideoStore = create<KhorVideoState>((set, get) => ({
         ],
       }))
 
-      // Request thumbnails for the loaded videos (fire and forget)
       if (videos.length > 0) {
+        // Request thumbnails (fire and forget)
         thumbnailGeneration++
         const gen = thumbnailGeneration
         requestThumbnails(videos.map((v) => v.path), gen).catch(() => {})
+
+        // Probe durations (fire and forget, update labels as they arrive)
+        probeDurations(videos.map((v) => v.path))
+          .then((results) => {
+            set((state) => ({
+              explorerFiles: state.explorerFiles.map((f) => {
+                const r = results.find((d) => d.path === f.path)
+                return r ? { ...f, durationLabel: formatDuration(r.durationSecs) } : f
+              }),
+              sequence: state.sequence.map((f) => {
+                const r = results.find((d) => d.path === f.path)
+                return r ? { ...f, durationLabel: formatDuration(r.durationSecs) } : f
+              }),
+            }))
+          })
+          .catch(() => {})
       }
     } catch (error) {
       set((state) => ({
