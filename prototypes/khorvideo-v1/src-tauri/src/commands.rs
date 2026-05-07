@@ -1,9 +1,11 @@
+use crate::thumbnailer::{CurrentGeneration, ThumbnailRequest, ThumbSender};
 use serde::{Deserialize, Serialize};
 use std::{
     fs,
     io::Write,
     path::Path,
     process::{Command, Stdio},
+    sync::atomic::Ordering,
 };
 
 #[derive(Debug, Serialize)]
@@ -193,4 +195,21 @@ pub fn run_concat(job: ConcatJob) -> Result<ConcatResult, String> {
 
 fn escape_concat_path(path: &str) -> String {
     path.replace('\\', "/").replace('\'', "'\\''")
+}
+
+#[tauri::command]
+pub async fn request_thumbnails(
+    paths: Vec<String>,
+    generation: u64,
+    sender: tauri::State<'_, ThumbSender>,
+    current_gen: tauri::State<'_, CurrentGeneration>,
+) -> Result<(), String> {
+    current_gen.0.store(generation, Ordering::Relaxed);
+    let tx = sender.0.clone();
+    for path in paths {
+        tx.send(ThumbnailRequest { path, generation })
+            .await
+            .map_err(|e| e.to_string())?;
+    }
+    Ok(())
 }

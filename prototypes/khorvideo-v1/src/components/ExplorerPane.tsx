@@ -64,7 +64,11 @@ export function ExplorerPane({
             <article className="video-card" key={file.id}>
               <button className="thumbnail-button" type="button" onClick={() => onAddToSequence(file)}>
                 <div className={`thumbnail-surface tone-${file.thumbnailTone}`}>
-                  <span className="play-glyph">▶</span>
+                  {file.thumbnailSrc ? (
+                    <img src={file.thumbnailSrc} alt={file.name} className="thumbnail-img" />
+                  ) : (
+                    <span className="play-glyph">▶</span>
+                  )}
                   <span className="duration-chip">{file.durationLabel}</span>
                 </div>
                 <div className="file-card-body">

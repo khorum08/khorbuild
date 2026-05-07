@@ -1,4 +1,5 @@
-import { invoke } from '@tauri-apps/api/core'
+import { convertFileSrc, invoke } from '@tauri-apps/api/core'
+import { listen } from '@tauri-apps/api/event'
 import { open } from '@tauri-apps/plugin-dialog'
 import type { ConcatResult, DirectoryEntry, ProbeResult } from '../types'
 
@@ -23,6 +24,18 @@ export async function listDirectory(path: string): Promise<DirectoryEntry[]> {
 
 export async function probeAudio(path: string): Promise<ProbeResult> {
   return invoke<ProbeResult>('probe_audio', { path })
+}
+
+export async function requestThumbnails(paths: string[], generation: number): Promise<void> {
+  return invoke('request_thumbnails', { paths, generation })
+}
+
+export async function onThumbnailReady(
+  handler: (path: string, thumbSrc: string) => void,
+): Promise<() => void> {
+  return listen<{ path: string; thumbPath: string }>('thumbnail:ready', (event) => {
+    handler(event.payload.path, convertFileSrc(event.payload.thumbPath))
+  })
 }
 
 export async function runConcat(inputPaths: string[], outputPath: string): Promise<ConcatResult> {

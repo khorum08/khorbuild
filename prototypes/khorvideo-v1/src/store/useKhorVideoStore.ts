@@ -1,6 +1,8 @@
 import { create } from 'zustand'
-import { getHomeDir, listDirectory, openFolderDialog, probeAudio, runConcat } from '../lib/tauriApi'
+import { getHomeDir, listDirectory, onThumbnailReady, openFolderDialog, probeAudio, requestThumbnails, runConcat } from '../lib/tauriApi'
 import type { ConsoleLine, ConcatResult, DirectoryEntry, FolderNode, VideoFile } from '../types'
+
+let thumbnailGeneration = 0
 
 type KhorVideoState = {
   activeFolder: string
@@ -15,6 +17,7 @@ type KhorVideoState = {
   lastConcatResult: ConcatResult | null
   init: () => Promise<void>
   selectAndLoadFolder: () => Promise<void>
+  setThumbnailSrc: (path: string, src: string) => void
   setFolderInput: (path: string) => void
   setOutputPath: (path: string) => void
   loadDirectory: (path?: string) => Promise<void>
@@ -88,6 +91,11 @@ export const useKhorVideoStore = create<KhorVideoState>((set, get) => ({
   isRunningConcat: false,
   lastConcatResult: null,
   init: async () => {
+    // Set up thumbnail event listener (persists for app lifetime)
+    onThumbnailReady((path, thumbSrc) => {
+      get().setThumbnailSrc(path, thumbSrc)
+    }).catch(() => {})
+
     try {
       const homeDir = await getHomeDir()
       set({ folderInput: homeDir, outputPath: `${homeDir}\\Videos\\khorvideo-concat-output.mp4` })
@@ -101,6 +109,15 @@ export const useKhorVideoStore = create<KhorVideoState>((set, get) => ({
       }))
     }
   },
+  setThumbnailSrc: (path, src) =>
+    set((state) => ({
+      explorerFiles: state.explorerFiles.map((f) =>
+        f.path === path ? { ...f, thumbnailSrc: src } : f,
+      ),
+      sequence: state.sequence.map((f) =>
+        f.path === path ? { ...f, thumbnailSrc: src } : f,
+      ),
+    })),
   selectAndLoadFolder: async () => {
     const { activeFolder, folderInput } = get()
     const startPath = activeFolder || folderInput || undefined
@@ -147,6 +164,13 @@ export const useKhorVideoStore = create<KhorVideoState>((set, get) => ({
           createLogLine('success', `[INFO] Loaded ${videos.length} video file${videos.length === 1 ? '' : 's'} from ${requestedPath}`),
         ],
       }))
+
+      // Request thumbnails for the loaded videos (fire and forget)
+      if (videos.length > 0) {
+        thumbnailGeneration++
+        const gen = thumbnailGeneration
+        requestThumbnails(videos.map((v) => v.path), gen).catch(() => {})
+      }
     } catch (error) {
       set((state) => ({
         isLoadingDirectory: false,

@@ -8,6 +8,7 @@ export type VideoFile = {
   durationLabel: string
   audioStatus: AudioStatus
   thumbnailTone: 'amber' | 'blue' | 'emerald' | 'purple' | 'rose' | 'slate'
+  thumbnailSrc?: string
 }
 
 export type DirectoryEntry = {
