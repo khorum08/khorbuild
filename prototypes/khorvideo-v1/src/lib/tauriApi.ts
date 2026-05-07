@@ -46,3 +46,11 @@ export async function runConcat(inputPaths: string[], outputPath: string): Promi
     },
   })
 }
+
+export async function onConcatLog(
+  handler: (stream: 'stdout' | 'stderr', line: string) => void,
+): Promise<() => void> {
+  return listen<{ stream: 'stdout' | 'stderr'; line: string }>('concat:log', (event) => {
+    handler(event.payload.stream, event.payload.line)
+  })
+}
